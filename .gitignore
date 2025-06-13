@@ -37,3 +37,8 @@ static/uploads/*
 
 # Test Files
 test_data.csv
+
+# Environment Variables
+.env
+.env.local
+.env.production

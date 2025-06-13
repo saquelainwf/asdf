@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
+from config import Config
 
 def get_db_connection():
     """
@@ -7,11 +8,11 @@ def get_db_connection():
     """
     try:
         connection = mysql.connector.connect(
-            host='localhost',
-            database='mis_upload_system',
-            user='root',
-            password='',  # Update with your MySQL password
-            port=3306
+            host=Config.DB_HOST,
+            database=Config.DB_NAME,
+            user=Config.DB_USER,
+            password=Config.DB_PASSWORD,
+            port=Config.DB_PORT
         )
         return connection
     except Error as e:

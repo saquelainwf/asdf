@@ -29,7 +29,7 @@
                     <div class="col-md-4">
                         <strong>Duplicates:</strong> {{ upload_session.duplicate_count }}
                         {% if upload_session.duplicate_count > 0 %}
-                        <a href="{{ url_for('download_duplicates', session_id=session_id) }}" class="btn btn-sm btn-warning ms-2">
+                        <a href="{{ url_for('data.download_duplicates', session_id=session_id) }}" class="btn btn-sm btn-warning ms-2">
                             <i class="fas fa-download me-1"></i>Download
                         </a>
                         {% endif %}
@@ -54,7 +54,7 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <form method="POST" action="{{ url_for('submit_data', session_id=session_id) }}" id="previewForm">
+                <form method="POST" action="{{ url_for('upload.submit_data', session_id=session_id) }}" id="previewForm">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0" id="dataTable">
                             <thead class="table-dark">
@@ -194,7 +194,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6 text-end">
-                                <a href="{{ url_for('upload_page') }}" class="btn btn-secondary me-2">
+                                <a href="{{ url_for('upload.upload_page') }}" class="btn btn-secondary me-2">
                                     <i class="fas fa-arrow-left me-1"></i>Back to Upload
                                 </a>
                                 <button type="submit" class="btn btn-success btn-lg" id="submitDataBtn">

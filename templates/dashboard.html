@@ -13,10 +13,10 @@
                 </h1>
                 <p class="lead text-muted">Welcome to the MIS Upload System. Manage your loan data efficiently.</p>
                 <div class="mt-4">
-                    <a href="{{ url_for('upload_page') }}" class="btn btn-primary btn-lg me-3">
+                    <a href="{{ url_for('upload.upload_page') }}" class="btn btn-primary btn-lg me-3">
                         <i class="fas fa-upload me-2"></i>Upload New File
                     </a>
-                    <a href="{{ url_for('view_data') }}" class="btn btn-outline-primary btn-lg">
+                    <a href="{{ url_for('data.view_data') }}" class="btn btn-outline-primary btn-lg">
                         <i class="fas fa-database me-2"></i>View All Data
                     </a>
                 </div>
@@ -145,13 +145,13 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('upload_page') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                        <a href="{{ url_for('upload.upload_page') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
                             <i class="fas fa-upload fa-2x mb-2"></i>
                             <span>Upload MIS File</span>
                         </a>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('view_data') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column justify-content-center">
+                        <a href="{{ url_for('data.view_data') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column justify-content-center">
                             <i class="fas fa-table fa-2x mb-2"></i>
                             <span>View All Data</span>
                         </a>
