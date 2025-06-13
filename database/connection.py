@@ -10,7 +10,7 @@ def get_db_connection():
             host='localhost',
             database='mis_upload_system',
             user='root',
-            password='BigNewMoose123',  # Update with your MySQL password
+            password='',  # Update with your MySQL password
             port=3306
         )
         return connection
