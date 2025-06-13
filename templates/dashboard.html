@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MIS Upload System{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-tachometer-alt me-3"></i>MIS Upload Dashboard
+                </h1>
+                <p class="lead text-muted">Welcome to the MIS Upload System. Manage your loan data efficiently.</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('upload_page') }}" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-upload me-2"></i>Upload New File
+                    </a>
+                    <a href="{{ url_for('view_data') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-database me-2"></i>View All Data
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-database fa-3x text-primary mb-3"></i>
+                <h2 class="display-4 text-primary">{{ total_records }}</h2>
+                <p class="text-muted mb-0">Total Records</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-university fa-3x text-success mb-3"></i>
+                <h2 class="display-4 text-success">{{ bank_stats|length }}</h2>
+                <p class="text-muted mb-0">Active Banks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-upload fa-3x text-info mb-3"></i>
+                <h2 class="display-4 text-info">{{ recent_uploads|length }}</h2>
+                <p class="text-muted mb-0">Recent Uploads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-warning mb-3"></i>
+                <h2 class="display-4 text-warning">6</h2>
+                <p class="text-muted mb-0">Loan Categories</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bank Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Records by Bank
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if bank_stats %}
+                    {% for bank in bank_stats %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">{{ bank.bank_name }}</span>
+                            <span class="badge bg-primary">{{ bank.count }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" style="width: {{ (bank.count / total_records * 100) if total_records > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>No data available yet. Upload some files to see statistics.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Uploads -->
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Uploads
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_uploads %}
+                    {% for upload in recent_uploads %}
+                    <div class="mb-3 pb-3 {{ 'border-bottom' if not loop.last }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ upload.bank_name }}</h6>
+                                <small class="text-muted">{{ upload.category_name }}</small>
+                                <br>
+                                <small class="text-success">{{ upload.approved_rows }} rows imported</small>
+                            </div>
+                            <small class="text-muted">
+                                {{ upload.created_at.strftime('%m/%d') if upload.created_at }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-upload fa-3x mb-3"></i>
+                        <p>No recent uploads</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('upload_page') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                            <i class="fas fa-upload fa-2x mb-2"></i>
+                            <span>Upload MIS File</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('view_data') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column justify-content-center">
+                            <i class="fas fa-table fa-2x mb-2"></i>
+                            <span>View All Data</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-info w-100 h-100 d-flex flex-column justify-content-center" onclick="window.location.reload()">
+                            <i class="fas fa-sync fa-2x mb-2"></i>
+                            <span>Refresh Dashboard</span>
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-warning w-100 h-100 d-flex flex-column justify-content-center" onclick="downloadSample()">
+                            <i class="fas fa-download fa-2x mb-2"></i>
+                            <span>Download Sample</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function downloadSample() {
+    // Create sample CSV content
+    const csvContent = `unique_code,customer_name,disbursement_amount,payout_amount,agreement_no,disbursement_date,commission_amount,branch_name,state,region,dsa_name
+SAMPLE001,John Doe,500000,15000,AGR001,2025-04-01,20000,Mumbai Branch,Maharashtra,West,DSA Sample 1
+SAMPLE002,Jane Smith,750000,22500,AGR002,2025-04-02,25000,Delhi Branch,Delhi,North,DSA Sample 2
+SAMPLE003,Robert Johnson,300000,9000,AGR003,2025-04-03,12000,Bangalore Branch,Karnataka,South,DSA Sample 3`;
+    
+    // Create and download file
+    const element = document.createElement('a');
+    const file = new Blob([csvContent], {type: 'text/csv'});
+    element.href = URL.createObjectURL(file);
+    element.download = 'sample_mis_data.csv';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Successful - MIS Upload System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white text-center">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-check-circle fa-2x mb-3"></i>
+                    <br>Upload Successful!
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <h1 class="display-4 text-success">{{ count }}</h1>
+                    <p class="lead">Records successfully imported into the system</p>
+                </div>
+                
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Your MIS data has been processed and saved to the database.
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('upload_page') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i>Upload More Files
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="currentTime"></span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confetti Animation -->
+<script>
+// Simple confetti effect
+function createConfetti() {
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.width = '10px';
+        confetti.style.height = '10px';
+        confetti.style.backgroundColor = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][Math.floor(Math.random() * 5)];
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+        confetti.style.animation = 'confetti-fall linear infinite';
+        confetti.style.zIndex = '9999';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+            confetti.remove();
+        }, 5000);
+    }
+}
+
+// CSS for confetti animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes confetti-fall {
+        from {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Trigger confetti on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current time
+    const now = new Date();
+    const timeString = now.getFullYear() + '-' + 
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(now.getDate()).padStart(2, '0') + ' ' +
+                      String(now.getHours()).padStart(2, '0') + ':' +
+                      String(now.getMinutes()).padStart(2, '0') + ':' +
+                      String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('currentTime').textContent = 'Processed at ' + timeString;
+    
+    createConfetti();
+});
+</script>
+{% endblock %}

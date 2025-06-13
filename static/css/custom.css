@@ -1,0 +1,374 @@
+/* Custom CSS for MIS Upload System */
+
+/* General Enhancements */
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Navigation Enhancements */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    background: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    background: #fff !important;
+    border-bottom: 1px solid #e9ecef;
+    color: #495057 !important;
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-bottom: none;
+}
+
+.card-header.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+    color: white !important;
+    border-bottom: none;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    border-bottom: none;
+}
+
+/* File Upload Area */
+.file-upload-area {
+    border: 2px dashed #ced4da;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.file-upload-area:hover {
+    border-color: #667eea;
+    background-color: #e3f2fd;
+}
+
+.file-upload-area.dragover {
+    border-color: #667eea;
+    background-color: #e3f2fd;
+    transform: scale(1.02);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 0.5rem 1.2rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+/* Table Enhancements */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.table tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Form Enhancements */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.2s ease;
+    padding: 0.5rem 0.75rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Alert Enhancements */
+.alert {
+    border: none;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    background-color: #e3f2fd;
+    border-left-color: #2196f3;
+    color: #0d47a1;
+}
+
+.alert-success {
+    background-color: #e8f5e8;
+    border-left-color: #4caf50;
+    color: #2e7d32;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    border-left-color: #f44336;
+    color: #c62828;
+}
+
+.alert-warning {
+    background-color: #fff3e0;
+    border-left-color: #ff9800;
+    color: #e65100;
+}
+
+/* Dashboard Statistics Cards */
+.stats-card {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.stats-card i {
+    margin-bottom: 1rem;
+}
+
+.stats-card h2 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Progress Bar */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .card {
+        margin: 0.5rem 0;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+    }
+    
+    .file-upload-area {
+        padding: 2rem 1rem;
+    }
+}
+
+/* Loading Animation */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    margin-top: 3rem;
+}
+
+footer small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Utility Classes */
+.text-primary {
+    color: #667eea !important;
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Icons */
+.fa-database { color: #667eea; }
+.fa-university { color: #28a745; }
+.fa-upload { color: #17a2b8; }
+.fa-chart-line { color: #ffc107; }
+
+/* Preview Page Specific Styles */
+.editable-input {
+    background-color: #fff !important;
+    border: 1px solid #ced4da !important;
+    color: #495057 !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.6rem !important;
+    min-height: 32px !important;
+}
+
+.editable-input:focus {
+    background-color: #fff !important;
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    color: #495057 !important;
+}
+
+.editable-input:hover {
+    border-color: #adb5bd !important;
+}
+
+/* Table improvements for preview page */
+#dataTable tbody td {
+    padding: 0.6rem 0.4rem !important;
+    vertical-align: middle !important;
+}
+
+#dataTable .form-check-input {
+    transform: scale(1.2);
+}
+
+/* Input group styling in table */
+.input-group-text.bg-light {
+    background-color: #f8f9fa !important;
+    border-color: #ced4da !important;
+    color: #6c757d !important;
+    font-weight: 500;
+}
+
+/* Badge styling */
+.badge.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    font-size: 0.8rem;
+}
+
+/* Row hover effect */
+#dataTable tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.03) !important;
+}
+
+/* Checkbox styling */
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+/* Better spacing for table cells */
+#dataTable th,
+#dataTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive table improvements */
+@media (max-width: 1200px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .editable-input {
+        font-size: 0.8rem !important;
+        padding: 0.3rem 0.5rem !important;
+        min-height: 28px !important;
+    }
+}

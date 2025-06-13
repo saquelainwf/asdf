@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Data - MIS Upload System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Upload Info Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Upload Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Bank:</strong> {{ upload_session.bank_name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Category:</strong> {{ upload_session.category_name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>File:</strong> {{ upload_session.filename.split('_', 1)[1] }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Total Rows:</strong> {{ upload_session.total_rows }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Preview Card -->
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>Preview and Edit Data
+                </h5>
+                <div>
+                    <button type="button" class="btn btn-outline-light btn-sm me-2" id="selectAllBtn">
+                        <i class="fas fa-check-square me-1"></i>Select All
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm" id="deselectAllBtn">
+                        <i class="fas fa-square me-1"></i>Deselect All
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <form method="POST" action="{{ url_for('submit_data', session_id=session_id) }}" id="previewForm">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="dataTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 50px; text-align: center;">
+                                        <input type="checkbox" id="masterCheckbox" class="form-check-input">
+                                    </th>
+                                    <th style="width: 60px; text-align: center;">#</th>
+                                    <th style="min-width: 100px;">Unique Code</th>
+                                    <th style="min-width: 150px;">Customer Name</th>
+                                    <th style="min-width: 140px;">Disbursement Amount</th>
+                                    <th style="min-width: 120px;">Payout Amount</th>
+                                    <th style="min-width: 100px;">Agreement No</th>
+                                    <th style="min-width: 120px;">Disbursement Date</th>
+                                    <th style="min-width: 130px;">Commission Amount</th>
+                                    <th style="min-width: 120px;">Branch</th>
+                                    <th style="min-width: 80px;">State</th>
+                                    <th style="min-width: 120px;">DSA Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data %}
+                                <tr>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <input type="checkbox" name="approved_rows" value="{{ loop.index0 }}" 
+                                               class="form-check-input row-checkbox" checked>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle; font-weight: bold;">{{ loop.index }}</td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="badge bg-primary text-white px-2 py-1">{{ row.loan_ac_no }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <input type="text" class="form-control editable-input" 
+                                               name="customer_name_{{ loop.index0 }}"
+                                               value="{{ row.customer_name }}" 
+                                               data-field="customer_name" 
+                                               data-row="{{ loop.index0 }}"
+                                               style="min-width: 150px; font-weight: 500;">
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-success fw-bold fs-6">
+                                            ₹{{ "{:,.2f}".format(row.disbursement_amount) if row.disbursement_amount else '0.00' }}
+                                        </span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div class="input-group" style="align-items: center;">
+                                            <span class="input-group-text bg-light" style="height: 38px;">₹</span>
+                                            <input type="number" class="form-control editable-input" 
+                                                   name="payout_amount_{{ loop.index0 }}"
+                                                   value="{{ row.payout_amount if row.payout_amount else '' }}" 
+                                                   data-field="payout_amount" 
+                                                   data-row="{{ loop.index0 }}" 
+                                                   step="0.01" min="0"
+                                                   style="min-width: 90px; font-weight: 500; height: 38px;">
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.agreement_no or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.disbursement_date or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">₹</span>
+                                            <input type="number" class="form-control editable-input" 
+                                                   name="commission_amount_{{ loop.index0 }}"
+                                                   value="{{ row.commission_amount if row.commission_amount else '' }}" 
+                                                   data-field="commission_amount" 
+                                                   data-row="{{ loop.index0 }}" 
+                                                   step="0.01" min="0"
+                                                   style="min-width: 90px; font-weight: 500;">
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.branch_name or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.state or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <input type="text" class="form-control editable-input" 
+                                               name="dsa_name_{{ loop.index0 }}"
+                                               value="{{ row.dsa_name or '' }}" 
+                                               data-field="dsa_name" 
+                                               data-row="{{ loop.index0 }}"
+                                               style="min-width: 120px; font-weight: 500;">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="card-footer bg-light">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div id="selectionInfo" class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <span id="selectedCount">{{ data|length }}</span> of {{ data|length }} rows selected
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{{ url_for('upload_page') }}" class="btn btn-secondary me-2">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to Upload
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg" id="submitDataBtn">
+                                    <i class="fas fa-check me-2"></i>Submit Selected Rows
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const submitBtn = document.getElementById('submitDataBtn');
+    const previewForm = document.getElementById('previewForm');
+
+    // Update selection count
+    function updateSelectionCount() {
+        const checked = document.querySelectorAll('.row-checkbox:checked').length;
+        selectedCount.textContent = checked;
+        
+        // Update submit button state
+        if (checked === 0) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>No Rows Selected';
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fas fa-check me-2"></i>Submit ${checked} Selected Rows`;
+        }
+        
+        // Update master checkbox state
+        if (checked === 0) {
+            masterCheckbox.indeterminate = false;
+            masterCheckbox.checked = false;
+        } else if (checked === rowCheckboxes.length) {
+            masterCheckbox.indeterminate = false;
+            masterCheckbox.checked = true;
+        } else {
+            masterCheckbox.indeterminate = true;
+        }
+    }
+
+    // Master checkbox functionality
+    masterCheckbox.addEventListener('change', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectionCount();
+    });
+
+    // Individual checkbox functionality
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
+
+    // Select all button
+    selectAllBtn.addEventListener('click', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateSelectionCount();
+    });
+
+    // Deselect all button
+    deselectAllBtn.addEventListener('click', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateSelectionCount();
+    });
+
+    // Form submission
+    previewForm.addEventListener('submit', function(e) {
+        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one row to submit.');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    });
+
+    // Initialize selection count
+    updateSelectionCount();
+
+    // Auto-save functionality for editable fields
+    const editableFields = document.querySelectorAll('.editable-input');
+    editableFields.forEach(field => {
+        field.addEventListener('change', function() {
+            // Visual feedback for changes
+            this.style.backgroundColor = '#fff3cd';
+            this.style.borderColor = '#ffc107';
+            setTimeout(() => {
+                this.style.backgroundColor = '#fff';
+                this.style.borderColor = '#ced4da';
+            }, 1500);
+        });
+        
+        // Better focus styling
+        field.addEventListener('focus', function() {
+            this.style.backgroundColor = '#fff';
+        });
+    });
+});
+</script>
+{% endblock %}
