@@ -63,18 +63,21 @@
                                         <input type="checkbox" id="masterCheckbox" class="form-check-input">
                                     </th>
                                     <th style="width: 60px; text-align: center;">#</th>
-                                    <th style="min-width: 100px;">Loan Account No.</th>
-                                    <th style="min-width: 150px;">Customer Name</th>
-                                    <th style="min-width: 140px;">gross_loan_amount</th>
-                                    <th style="min-width: 140px;">Disbursement Amount</th>
-                                    <th style="min-width: 120px;">Payout Amount</th>
-                                    <th style="min-width: 100px;">Agreement No</th>
-                                    <th style="min-width: 120px;">Disbursement Date</th>
-                                    <th style="min-width: 130px;">Commission Amount</th>
-                                    <th style="min-width: 120px;">Branch</th>
-                                    <th style="min-width: 80px;">State</th>
-                                    <th style="min-width: 80px;">City</th>
-                                    <th style="min-width: 120px;">DSA Name</th>
+                                    <th style="min-width: auto;">Loan Account No.</th>
+                                    <th style="min-width: auto;">Customer Name</th>
+                                    <th style="min-width: auto;">gross_loan_amount</th>
+                                    <th style="min-width: auto;">Disbursement Amount</th>
+                                    <th style="min-width: auto;">Payout Amount</th>
+                                    <th style="min-width: auto;">Agreement No</th>
+                                    <th style="min-width: auto;">Disbursement Date</th>
+                                    <th style="min-width: auto;">Business Month</th>
+                                    <th style="min-width: auto;">Commission Amount</th>
+                                    <th style="min-width: auto;">Processing Fee</th>
+                                    <th style="min-width: auto;">Insurance Amount</th>
+                                    <th style="min-width: auto;">Branch</th>
+                                    <th style="min-width: auto;">State</th>
+                                    <th style="min-width: auto;">City</th>
+                                    <th style="min-width: auto;">DSA Name</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -94,7 +97,7 @@
                                                value="{{ row.customer_name }}" 
                                                data-field="customer_name" 
                                                data-row="{{ loop.index0 }}"
-                                               style="min-width: 150px; font-weight: 500;">
+                                               style="font-weight: 500;">
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="text-success fw-bold fs-6">
@@ -115,7 +118,7 @@
                                                    data-field="payout_amount" 
                                                    data-row="{{ loop.index0 }}" 
                                                    step="0.01" min="0"
-                                                   style="min-width: 90px; font-weight: 500; height: 38px;">
+                                                   style="font-weight: 500; height: 38px;">
                                         </div>
                                     </td>
                                     <td style="vertical-align: middle;">
@@ -123,6 +126,9 @@
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="text-muted">{{ row.disbursement_date or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.business_month or '-' }}</span>
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <div class="input-group">
@@ -133,7 +139,31 @@
                                                    data-field="commission_amount" 
                                                    data-row="{{ loop.index0 }}" 
                                                    step="0.01" min="0"
-                                                   style="min-width: 90px; font-weight: 500;">
+                                                   style="font-weight: 500;">
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">₹</span>
+                                            <input type="number" class="form-control editable-input" 
+                                                name="processing_fee_{{ loop.index0 }}"
+                                                value="{{ row.processing_fee if row.processing_fee else '' }}" 
+                                                data-field="processing_fee" 
+                                                data-row="{{ loop.index0 }}" 
+                                                step="0.01" min="0"
+                                                style="font-weight: 500;">
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div class="input-group" style="align-items: center;">
+                                            <span class="input-group-text bg-light" style="height: 38px;">₹</span>
+                                            <input type="number" class="form-control editable-input" 
+                                                name="insurance_amount_{{ loop.index0 }}"
+                                                value="{{ row.insurance_amount if row.insurance_amount else '' }}" 
+                                                data-field="insurance_amount" 
+                                                data-row="{{ loop.index0 }}" 
+                                                step="0.01" min="0"
+                                                style="font-weight: 500; height: 38px;">
                                         </div>
                                     </td>
                                     <td style="vertical-align: middle;">
@@ -151,7 +181,7 @@
                                                value="{{ row.dsa_name or '' }}" 
                                                data-field="dsa_name" 
                                                data-row="{{ loop.index0 }}"
-                                               style="min-width: 120px; font-weight: 500;">
+                                               style="font-weight: 500;">
                                     </td>
                                 </tr>
                                 {% endfor %}

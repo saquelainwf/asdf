@@ -41,8 +41,15 @@ def parse_csv_file(filepath):
             
             # Optional fields
             row_data['agreement_no'] = str(row.get('agreement_no', '')).strip() if pd.notna(row.get('agreement_no')) else None
+            row_data['application_id'] = str(row.get('application_id', '')).strip() if pd.notna(row.get('application_id')) else None
             row_data['disbursement_date'] = parse_date(row.get('disbursement_date'))
+            row_data['business_month'] = parse_date(row.get('business_month'))
+            row_data['gross_loan_amount'] = clean_numeric_value(row.get('gross_loan_amount'))
+            row_data['tenure'] = clean_numeric_value(row.get('tenure'))
+            row_data['roi'] = clean_numeric_value(row.get('roi'))
             row_data['commission_amount'] = clean_numeric_value(row.get('commission_amount'))
+            row_data['processing_fee'] = clean_numeric_value(row.get('processing_fee'))
+            row_data['insurance_amount'] = clean_numeric_value(row.get('insurance_amount'))
             row_data['branch_name'] = str(row.get('branch_name', '')).strip() if pd.notna(row.get('branch_name')) else None
             row_data['state'] = str(row.get('state', '')).strip() if pd.notna(row.get('state')) else None
             row_data['city'] = str(row.get('city', '')).strip() if pd.notna(row.get('city')) else None
