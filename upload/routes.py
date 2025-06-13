@@ -7,11 +7,13 @@ from utils.helpers import allowed_file, REQUIRED_HEADERS, OPTIONAL_HEADERS
 from services.csv_parser import parse_csv_file
 from services.validator import validate_csv_data
 from utils.helpers import parse_date
+from auth.decorators import admin_required
 from .db import get_banks_categories, save_upload_session, save_duplicates, get_upload_session, update_upload_session
 
 upload_bp = Blueprint('upload', __name__)
 
 @upload_bp.route('/upload')
+@admin_required
 def upload_page():
     banks, categories = get_banks_categories()
     return render_template('upload.html', 
@@ -21,6 +23,7 @@ def upload_page():
                          optional_headers=OPTIONAL_HEADERS)
 
 @upload_bp.route('/upload', methods=['POST'])
+@admin_required
 def handle_upload():
     try:
         # Get form data
@@ -87,6 +90,7 @@ def handle_upload():
         return redirect(url_for('upload.upload_page'))
 
 @upload_bp.route('/preview/<session_id>')
+@admin_required
 def preview_page(session_id):
     upload_session = get_upload_session(session_id)
     
@@ -103,6 +107,7 @@ def preview_page(session_id):
                          session_id=session_id)
 
 @upload_bp.route('/submit/<session_id>', methods=['POST'])
+@admin_required
 def submit_data(session_id):
     try:
         # Get approved rows from form
@@ -154,6 +159,7 @@ def submit_data(session_id):
         return redirect(url_for('upload.preview_page', session_id=session_id))
 
 @upload_bp.route('/success')
+@admin_required
 def success_page():
     count = int(request.args.get('count', 0))
     duplicate_count = int(request.args.get('duplicates', 0))

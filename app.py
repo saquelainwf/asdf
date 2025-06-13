@@ -6,6 +6,7 @@ from config import Config
 from dashboard.routes import dashboard_bp
 from upload.routes import upload_bp
 from data.routes import data_bp
+from auth.routes import auth_bp
 
 def create_app():
     app = Flask(__name__)
@@ -17,6 +18,7 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
+    app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(data_bp)
