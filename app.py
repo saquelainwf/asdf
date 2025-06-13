@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, session, request
+from datetime import datetime, timedelta
 import os
 from config import Config
 
@@ -17,6 +18,39 @@ def create_app():
     
     # Ensure upload directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
+    # Security headers
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    
+    # Session timeout check
+    @app.before_request
+    def check_session_timeout():
+        # Skip timeout check for login/logout routes
+        if request.endpoint in ['auth.login', 'auth.logout', 'static']:
+            return
+        
+        if 'logged_in' in session and session['logged_in']:
+            # Check if session has expired
+            if 'last_activity' in session:
+                last_activity = datetime.fromisoformat(session['last_activity'])
+                if datetime.now() - last_activity > timedelta(seconds=app.config['PERMANENT_SESSION_LIFETIME']):
+                    session.clear()
+                    from flask import flash, redirect, url_for
+                    flash('Your session has expired. Please log in again.', 'warning')
+                    return redirect(url_for('auth.login'))
+            
+            # Update last activity
+            session['last_activity'] = datetime.now().isoformat()
+            session.permanent = True
     
     # Register blueprints
     app.register_blueprint(auth_bp)

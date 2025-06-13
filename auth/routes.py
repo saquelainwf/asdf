@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from .db import verify_user_credentials, update_last_login
+from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -24,6 +25,8 @@ def login():
             session['name'] = user['name']
             session['role'] = user['role']
             session['role_name'] = user['role_name']
+            session['last_activity'] = datetime.now().isoformat()
+            session.permanent = True
             
             # Update last login
             update_last_login(user['id'])
