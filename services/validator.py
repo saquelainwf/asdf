@@ -1,13 +1,11 @@
 from database.connection import get_db_connection
 
 def validate_csv_data(data):
-    """
-    Validate CSV data for business rules
-    """
     if not data:
-        return "No data found in file"
+        return None, []
     
-    errors = []
+    valid_data = []
+    duplicate_data = []
     loan_ac_nos = set()
     
     for i, row in enumerate(data):
@@ -17,36 +15,39 @@ def validate_csv_data(data):
         if not row.get('loan_ac_no'):
             row_errors.append("loan_ac_no is required")
         elif row['loan_ac_no'] in loan_ac_nos:
-            row_errors.append(f"Duplicate loan_ac_no within file: {row['loan_ac_no']}")
+            duplicate_data.append({
+                'row_index': i,
+                'row_data': row,
+                'duplicate_type': 'within_file'
+            })
+            continue
         else:
             loan_ac_nos.add(row['loan_ac_no'])
             
-            # Check if loan_ac_no exists in database
+            # Check if exists in database
             if check_loan_ac_no_exists(row['loan_ac_no']):
-                row_errors.append(f"loan_ac_no already exists in database: {row['loan_ac_no']}")
+                duplicate_data.append({
+                    'row_index': i,
+                    'row_data': row,
+                    'duplicate_type': 'in_database'
+                })
+                continue
         
+        # Validate other required fields
         if not row.get('customer_name'):
             row_errors.append("customer_name is required")
+        if row.get('disbursement_amount') is None or row['disbursement_amount'] <= 0:
+            row_errors.append("disbursement_amount is required and must be > 0")
+        if row.get('payout_amount') is None or row['payout_amount'] < 0:
+            row_errors.append("payout_amount is required and cannot be negative")
         
-        if row.get('disbursement_amount') is None:
-            row_errors.append("disbursement_amount is required")
-        elif row['disbursement_amount'] <= 0:
-            row_errors.append("disbursement_amount must be greater than 0")
-        
-        if row.get('payout_amount') is None:
-            row_errors.append("payout_amount is required")
-        elif row['payout_amount'] < 0:
-            row_errors.append("payout_amount cannot be negative")
-        
-        # Add row errors to main errors list
         if row_errors:
-            errors.append(f"Row {i+1}: {'; '.join(row_errors)}")
+            return f"Row {i+1}: {'; '.join(row_errors)}", []
+        
+        valid_data.append(row)
     
-    # Return first few errors (don't overwhelm user)
-    if errors:
-        return '; '.join(errors[:5]) + (f" ... and {len(errors)-5} more errors" if len(errors) > 5 else "")
-    
-    return None
+    return None, duplicate_data
+
 
 def check_loan_ac_no_exists(loan_ac_no):
     """

@@ -17,13 +17,12 @@
                     <h6><i class="fas fa-info-circle me-2"></i>CSV Format Requirements</h6>
                     <p class="mb-2"><strong>Required Headers (exact names):</strong></p>
                     <ul class="mb-2">
-                        <li><code>loan_ac_no</code> - Unique identifier</li>
-                        <li><code>customer_name</code> - Customer name</li>
-                        <li><code>disbursement_amount</code> - Loan amount</li>
-                        <li><code>payout_amount</code> - Payout amount</li>
+                        {% for header in required_headers %}
+                            <li><code>{{ header }}</code></li>
+                        {% endfor %}
                     </ul>
                     <p class="mb-2"><strong>Optional Headers:</strong></p>
-                    <code>agreement_no, disbursement_date, commission_amount, branch_name, state, region, dsa_name</code>
+                    <code>{{ optional_headers | join(', ') }}</code>
                 </div>
 
                 <!-- Upload Form -->

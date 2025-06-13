@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import os
+import json
 import uuid
 from datetime import datetime
 import csv
 import pandas as pd
 from database.connection import get_db_connection
-from utils.helpers import allowed_file, validate_csv_headers
+from utils.helpers import allowed_file, validate_csv_headers, REQUIRED_HEADERS, OPTIONAL_HEADERS
 from services.csv_parser import parse_csv_file
 from services.validator import validate_csv_data, check_loan_ac_no_exists
 
@@ -74,7 +75,13 @@ def upload_page():
     cursor.close()
     conn.close()
     
-    return render_template('upload.html', banks=banks, categories=categories)
+    return render_template(
+        'upload.html', 
+        banks=banks, 
+        categories=categories,
+        required_headers=REQUIRED_HEADERS,
+        optional_headers=OPTIONAL_HEADERS
+    )
 
 @app.route('/upload', methods=['POST'])
 def handle_upload():
@@ -115,27 +122,41 @@ def handle_upload():
             return redirect(url_for('upload_page'))
         
         # Validate headers and data
-        validation_error = validate_csv_data(data)
+        validation_error, duplicates = validate_csv_data(data)
         if validation_error:
             os.remove(filepath)  # Clean up file
             flash(f'Validation error: {validation_error}', 'error')
             return redirect(url_for('upload_page'))
         
+        # Filter out duplicates from main data
+        valid_data = [row for row in data if not any(dup['row_data']['loan_ac_no'] == row['loan_ac_no'] for dup in duplicates)]
+
         # Save upload session
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
+        # Save upload session
         cursor.execute("""
-            INSERT INTO upload_sessions (session_id, bank_id, category_id, filename, total_rows)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (session_id, bank_id, category_id, filename, len(data)))
+            INSERT INTO upload_sessions (session_id, bank_id, category_id, filename, total_rows, duplicate_count)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (session_id, bank_id, category_id, filename, len(valid_data), len(duplicates)))
+
+
+        # Save duplicates if any
+        for dup in duplicates:
+            cursor.execute("""
+                INSERT INTO duplicate_records (session_id, row_data, duplicate_type)
+                VALUES (%s, %s, %s)
+            """, (session_id, json.dumps(dup['row_data']), dup['duplicate_type']))
+
+        # Store valid data in session
         
         conn.commit()
         cursor.close()
         conn.close()
         
         # Store data in session for preview
-        session['upload_data'] = data
+        session['upload_data'] = valid_data
         session['session_id'] = session_id
         
         return redirect(url_for('preview_page', session_id=session_id))
@@ -303,7 +324,7 @@ def submit_data(session_id):
         else:
             flash('No records were imported. Please check the data and try again.', 'error')
         
-        return redirect(url_for('success_page', count=inserted_count))
+        return redirect(url_for('success_page', count=inserted_count, duplicates=upload_session['duplicate_count'], session_id=session_id))
         
     except Exception as e:
         flash(f'Submission failed: {str(e)}', 'error')
@@ -311,8 +332,10 @@ def submit_data(session_id):
 
 @app.route('/success')
 def success_page():
-    count = request.args.get('count', 0)
-    return render_template('success.html', count=count)
+    count = int(request.args.get('count', 0))
+    duplicate_count = int(request.args.get('duplicates', 0))
+    session_id = request.args.get('session_id', '')
+    return render_template('success.html', count=count, duplicate_count=duplicate_count, session_id=session_id)
 
 @app.route('/view-data')
 def view_data():
@@ -334,6 +357,48 @@ def view_data():
     conn.close()
     
     return render_template('view_data.html', data=data)
+
+@app.route('/download-duplicates/<session_id>')
+def download_duplicates(session_id):
+    import csv
+    from io import StringIO
+    from flask import Response
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT * FROM duplicate_records WHERE session_id = %s", (session_id,))
+    duplicates = cursor.fetchall()
+    
+    if not duplicates:
+        flash('No duplicates found for this session', 'info')
+        return redirect(url_for('upload_page'))
+    
+    # Create CSV
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Headers
+    sample_data = json.loads(duplicates[0]['row_data'])
+    headers = list(sample_data.keys()) + ['duplicate_type', 'duplicate_reason']
+    writer.writerow(headers)
+    
+    # Data rows
+    for dup in duplicates:
+        row_data = json.loads(dup['row_data'])
+        reason = 'Already exists in database' if dup['duplicate_type'] == 'in_database' else 'Duplicate within uploaded file'
+        row = list(row_data.values()) + [dup['duplicate_type'], reason]
+        writer.writerow(row)
+    
+    cursor.close()
+    conn.close()
+    
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=duplicates_{session_id}.csv'}
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -35,6 +35,7 @@ def parse_csv_file(filepath):
             # Required fields
             row_data['loan_ac_no'] = str(row.get('loan_ac_no', '')).strip()
             row_data['customer_name'] = str(row.get('customer_name', '')).strip()
+            row_data['gross_loan_amount'] = clean_numeric_value(row.get('gross_loan_amount'))
             row_data['disbursement_amount'] = clean_numeric_value(row.get('disbursement_amount'))
             row_data['payout_amount'] = clean_numeric_value(row.get('payout_amount'))
             
@@ -44,6 +45,7 @@ def parse_csv_file(filepath):
             row_data['commission_amount'] = clean_numeric_value(row.get('commission_amount'))
             row_data['branch_name'] = str(row.get('branch_name', '')).strip() if pd.notna(row.get('branch_name')) else None
             row_data['state'] = str(row.get('state', '')).strip() if pd.notna(row.get('state')) else None
+            row_data['city'] = str(row.get('city', '')).strip() if pd.notna(row.get('city')) else None
             row_data['region'] = str(row.get('region', '')).strip() if pd.notna(row.get('region')) else None
             row_data['dsa_name'] = str(row.get('dsa_name', '')).strip() if pd.notna(row.get('dsa_name')) else None
             

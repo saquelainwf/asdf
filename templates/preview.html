@@ -26,6 +26,14 @@
                     <div class="col-md-3">
                         <strong>Total Rows:</strong> {{ upload_session.total_rows }}
                     </div>
+                    <div class="col-md-4">
+                        <strong>Duplicates:</strong> {{ upload_session.duplicate_count }}
+                        {% if upload_session.duplicate_count > 0 %}
+                        <a href="{{ url_for('download_duplicates', session_id=session_id) }}" class="btn btn-sm btn-warning ms-2">
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -57,6 +65,7 @@
                                     <th style="width: 60px; text-align: center;">#</th>
                                     <th style="min-width: 100px;">Loan Account No.</th>
                                     <th style="min-width: 150px;">Customer Name</th>
+                                    <th style="min-width: 140px;">gross_loan_amount</th>
                                     <th style="min-width: 140px;">Disbursement Amount</th>
                                     <th style="min-width: 120px;">Payout Amount</th>
                                     <th style="min-width: 100px;">Agreement No</th>
@@ -64,6 +73,7 @@
                                     <th style="min-width: 130px;">Commission Amount</th>
                                     <th style="min-width: 120px;">Branch</th>
                                     <th style="min-width: 80px;">State</th>
+                                    <th style="min-width: 80px;">City</th>
                                     <th style="min-width: 120px;">DSA Name</th>
                                 </tr>
                             </thead>
@@ -85,6 +95,11 @@
                                                data-field="customer_name" 
                                                data-row="{{ loop.index0 }}"
                                                style="min-width: 150px; font-weight: 500;">
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-success fw-bold fs-6">
+                                            ₹{{ "{:,.2f}".format(row.gross_loan_amount) if row.gross_loan_amount else '0.00' }}
+                                        </span>
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="text-success fw-bold fs-6">
@@ -126,6 +141,9 @@
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="text-muted">{{ row.state or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.city or '-' }}</span>
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <input type="text" class="form-control editable-input" 
