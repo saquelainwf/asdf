@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Dashboard - MIS Upload System{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-user-tie me-3"></i>Agent Dashboard
+                </h1>
+                <p class="lead text-muted">Welcome back, {{ agent_name }}! Manage your case claims efficiently.</p>
+                <div class="mt-4">
+                    <button class="btn btn-primary btn-lg me-3" disabled>
+                        <i class="fas fa-plus me-2"></i>Claim New Case
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg" disabled>
+                        <i class="fas fa-list me-2"></i>View My Claims
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-info-circle me-1"></i>Case claiming functionality coming soon
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+                <h2 class="display-4 text-primary">{{ stats.total_claims }}</h2>
+                <p class="text-muted mb-0">Total Claims</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                <h2 class="display-4 text-warning">{{ stats.pending_claims }}</h2>
+                <p class="text-muted mb-0">Pending Claims</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h2 class="display-4 text-success">{{ stats.approved_claims }}</h2>
+                <p class="text-muted mb-0">Approved Claims</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                <h2 class="display-4 text-danger">{{ stats.rejected_claims }}</h2>
+                <p class="text-muted mb-0">Rejected Claims</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activity %}
+                    {% for activity in recent_activity %}
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small class="text-muted">{{ activity.description }}</small>
+                            </div>
+                            <small class="text-muted">{{ activity.date }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No recent activity</p>
+                        <small>Your case claims and updates will appear here</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-search me-2"></i>Search Cases
+                    </button>
+                    <button class="btn btn-outline-success" disabled>
+                        <i class="fas fa-file-upload me-2"></i>Bulk Claim
+                    </button>
+                    <button class="btn btn-outline-info" disabled>
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </button>
+                    <button class="btn btn-outline-warning" disabled>
+                        <i class="fas fa-chart-bar me-2"></i>View Reports
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-3 text-center">
+                    <i class="fas fa-wrench me-1"></i>Features under development
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Information Alert -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Agent Portal Information</h6>
+            <p class="mb-0">
+                Welcome to your agent dashboard! This is where you'll be able to claim disbursement cases, 
+                track your submissions, and manage your portfolio. The case claiming functionality will be 
+                implemented in the next phase of development.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any agent-specific JavaScript here
+    console.log('Agent dashboard loaded');
+});
+</script>
+{% endblock %}
