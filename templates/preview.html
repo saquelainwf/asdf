@@ -66,12 +66,13 @@
                                     <th style="min-width: auto;">Loan Account No.</th>
                                     <th style="min-width: auto;">Customer Name</th>
                                     <th style="min-width: auto;">gross_loan_amount</th>
+                                    <th style="min-width: auto;">Tenure</th>
+                                    <th style="min-width: auto;">ROI</th>
+                                    <th style="min-width: auto;">Loan Type</th>
                                     <th style="min-width: auto;">Disbursement Amount</th>
                                     <th style="min-width: auto;">Payout Amount</th>
-                                    <th style="min-width: auto;">Agreement No</th>
                                     <th style="min-width: auto;">Disbursement Date</th>
                                     <th style="min-width: auto;">Business Month</th>
-                                    <th style="min-width: auto;">Commission Amount</th>
                                     <th style="min-width: auto;">Processing Fee</th>
                                     <th style="min-width: auto;">Insurance Amount</th>
                                     <th style="min-width: auto;">Branch</th>
@@ -105,6 +106,15 @@
                                         </span>
                                     </td>
                                     <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.tenure or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.roi or '-' }}%</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="text-muted">{{ row.loan_type or '-' }}</span>
+                                    </td>
+                                    <td style="vertical-align: middle;">
                                         <span class="text-success fw-bold fs-6">
                                             ₹{{ "{:,.2f}".format(row.disbursement_amount) if row.disbursement_amount else '0.00' }}
                                         </span>
@@ -122,25 +132,10 @@
                                         </div>
                                     </td>
                                     <td style="vertical-align: middle;">
-                                        <span class="text-muted">{{ row.agreement_no or '-' }}</span>
-                                    </td>
-                                    <td style="vertical-align: middle;">
                                         <span class="text-muted">{{ row.disbursement_date or '-' }}</span>
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="text-muted">{{ row.business_month or '-' }}</span>
-                                    </td>
-                                    <td style="vertical-align: middle;">
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light">₹</span>
-                                            <input type="number" class="form-control editable-input" 
-                                                   name="commission_amount_{{ loop.index0 }}"
-                                                   value="{{ row.commission_amount if row.commission_amount else '' }}" 
-                                                   data-field="commission_amount" 
-                                                   data-row="{{ loop.index0 }}" 
-                                                   step="0.01" min="0"
-                                                   style="font-weight: 500;">
-                                        </div>
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <div class="input-group">

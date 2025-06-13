@@ -226,7 +226,7 @@ def submit_data(session_id):
         updated_data = {}
         for key, value in request.form.items():
             if key.startswith('customer_name_') or key.startswith('payout_amount_') or \
-               key.startswith('commission_amount_') or key.startswith('dsa_name_'):
+            key.startswith('processing_fee_') or key.startswith('insurance_amount_') or key.startswith('dsa_name_'):
                 field_name, row_index = key.rsplit('_', 1)
                 row_index = int(row_index)
                 if row_index not in updated_data:
@@ -251,11 +251,16 @@ def submit_data(session_id):
                                 row_data['payout_amount'] = float(value) if value else row_data['payout_amount']
                             except (ValueError, TypeError):
                                 pass  # Keep original value if conversion fails
-                        elif field == 'commission_amount':
+                        elif field == 'processing_fee':
                             try:
-                                row_data['commission_amount'] = float(value) if value else row_data['commission_amount']
+                                row_data['processing_fee'] = float(value) if value else row_data['processing_fee']
                             except (ValueError, TypeError):
-                                pass  # Keep original value if conversion fails
+                                pass
+                        elif field == 'insurance_amount':
+                            try:
+                                row_data['insurance_amount'] = float(value) if value else row_data['insurance_amount']
+                            except (ValueError, TypeError):
+                                pass
                         elif field == 'dsa_name':
                             row_data['dsa_name'] = value if value else row_data['dsa_name']
                 
@@ -277,19 +282,23 @@ def submit_data(session_id):
                 # Insert row with updated values
                 cursor.execute("""
                     INSERT INTO mis_data (
-                        bank_id, bank_name, category_id, loan_ac_no, agreement_no,
-                        application_id, customer_name, disbursement_date, disbursement_amount,
-                        gross_loan_amount, tenure, roi, payout_amount, commission_amount, 
-                        branch_name, state, city, region, dsa_name, created_by
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        bank_id, bank_name, category_id, loan_ac_no, application_id, 
+                        customer_name, disbursement_date, business_month, disbursement_amount,
+                        gross_loan_amount, tenure, roi, loan_type, payout_amount, 
+                        processing_fee, insurance_amount, branch_name, state, city, 
+                        region, dsa_name, created_by
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     upload_session['bank_id'], bank['bank_name'], upload_session['category_id'],
-                    row_data['loan_ac_no'], row_data.get('agreement_no'), row_data.get('application_id'),
-                    row_data['customer_name'], disbursement_date, row_data['disbursement_amount'],
-                    row_data.get('gross_loan_amount'), row_data.get('tenure'), row_data.get('roi'),
-                    row_data['payout_amount'], row_data.get('commission_amount'), 
-                    row_data.get('branch_name'), row_data.get('state'), row_data.get('city'),
-                    row_data.get('region'), row_data.get('dsa_name'), 1  # Admin user ID
+                    row_data['loan_ac_no'], row_data.get('application_id'),
+                    row_data['customer_name'], disbursement_date, 
+                    parse_date(row_data.get('business_month')) if row_data.get('business_month') else None,
+                    row_data['disbursement_amount'], row_data.get('gross_loan_amount'), 
+                    row_data.get('tenure'), row_data.get('roi'), row_data.get('loan_type'),
+                    row_data['payout_amount'], row_data.get('processing_fee'), 
+                    row_data.get('insurance_amount'), row_data.get('branch_name'), 
+                    row_data.get('state'), row_data.get('city'), row_data.get('region'), 
+                    row_data.get('dsa_name'), 1
                 ))
                 
                 inserted_count += 1

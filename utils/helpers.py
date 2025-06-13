@@ -11,14 +11,13 @@ REQUIRED_HEADERS = [
 ]
 
 OPTIONAL_HEADERS = [
-    'agreement_no',
     'application_id',
     'disbursement_date',
     'business_month',
     'gross_loan_amount',
     'tenure',
     'roi',
-    'commission_amount',
+    'loan_type',
     'processing_fee',
     'insurance_amount',
     'branch_name',
