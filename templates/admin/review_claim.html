@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Review Claim #{{ claim.id }} - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-search me-2"></i>Review Claim #{{ claim.id }}
+                        </h2>
+                        <p class="text-muted mb-0">{{ claim.status.title() }} case claim by {{ claim.agent_name }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('admin.claims_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Claims
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Claim Details -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Claim Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="fw-bold">Claim ID:</td>
+                        <td>#{{ claim.id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Agent:</td>
+                        <td>{{ claim.agent_name }} ({{ claim.agent_email }})</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Customer Name:</td>
+                        <td>{{ claim.customer_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Phone Number:</td>
+                        <td>{{ claim.customer_phone }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Loan Account No:</td>
+                        <td>{{ claim.loan_ac_no or 'Not provided' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Bank:</td>
+                        <td>{{ claim.bank_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Product Type:</td>
+                        <td>{{ claim.product_type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Loan Amount:</td>
+                        <td class="text-success fw-bold">₹{{ "{:,.0f}".format(claim.loan_amount) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Application Date:</td>
+                        <td>{{ claim.application_date.strftime('%d %b %Y') if claim.application_date else 'Not provided' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Requested Payout:</td>
+                        <td>
+                            <span class="badge bg-info">{{ claim.payout_percentage }}%</span>
+                            <span class="text-primary fw-bold">₹{{ "{:,.0f}".format(claim.loan_amount * claim.payout_percentage / 100) }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Claim Date:</td>
+                        <td>{{ claim.claim_date.strftime('%d %b %Y %I:%M %p') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Current Status:</td>
+                        <td>
+                            {% if claim.status == 'matched' %}
+                                <span class="badge bg-success">Matched</span>
+                            {% elif claim.status == 'disputed' %}
+                                <span class="badge bg-warning">Disputed</span>
+                            {% elif claim.status == 'unmatched' %}
+                                <span class="badge bg-dark">Unmatched</span>
+                            {% elif claim.status == 'pending' %}
+                                <span class="badge bg-info">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Potential Matches -->
+    <div class="col-lg-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Potential MIS Matches ({{ matches|length }})
+                </h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if matches %}
+                    {% for match in matches %}
+                    <div class="border rounded p-3 mb-3 {{ 'border-success bg-light' if match.confidence >= 0.9 else 'border-warning' if match.confidence >= 0.6 else 'border-secondary' }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ match.mis_record.customer_name }}</h6>
+                            <span class="badge {{ 'bg-success' if match.confidence >= 0.9 else 'bg-warning' if match.confidence >= 0.6 else 'bg-secondary' }}">
+                                {{ "{:.1f}".format(match.confidence * 100) }}%
+                            </span>
+                        </div>
+                        
+                        <div class="row small">
+                            <div class="col-6">
+                                <strong>Loan A/c:</strong> {{ match.mis_record.loan_ac_no }}<br>
+                                <strong>Amount:</strong> ₹{{ "{:,.0f}".format(match.mis_record.disbursement_amount) }}<br>
+                                <strong>Bank:</strong> {{ match.mis_record.bank_name }}
+                            </div>
+                            <div class="col-6">
+                                <strong>MIS Payout:</strong> ₹{{ "{:,.0f}".format(match.mis_record.payout_amount or 0) }}<br>
+                                <strong>Disbursed:</strong> {{ match.mis_record.disbursement_date.strftime('%d %b %Y') if match.mis_record.disbursement_date else 'N/A' }}<br>
+                                <strong>Branch:</strong> {{ match.mis_record.branch_name or 'N/A' }}
+                            </div>
+                        </div>
+                        
+                        {% if match.match_criteria %}
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <strong>Matched on:</strong> {{ match.match_criteria | join(', ') }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Quick Approve Button for this match -->
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-success" 
+                                    onclick="selectMatch({{ match.mis_record.id }}, {{ match.confidence }}, {{ match.mis_record.payout_amount or 0 }}, {{ match.mis_record.disbursement_amount }})">
+                                Select This Match
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <p>No potential matches found in MIS data</p>
+                        <small>This claim can be approved as standalone or rejected</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Forms -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-gavel me-2"></i>Admin Decision</h5>
+            </div>
+            <div class="card-body">
+                <!-- Approve Form -->
+                <form method="POST" action="{{ url_for('admin.approve_claim', claim_id=claim.id) }}" id="approveForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="final_payout_percentage" class="form-label">
+                                    Final Payout Percentage <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="final_payout_percentage" 
+                                           name="final_payout_percentage" required 
+                                           value="{{ claim.payout_percentage }}"
+                                           min="0.01" max="10.00" step="0.01">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Calculated Payout Amount</label>
+                                <div class="form-control bg-light" id="calculated_amount">
+                                    ₹{{ "{:,.0f}".format(claim.loan_amount * claim.payout_percentage / 100) }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Payout Source</label>
+                                <div id="payout_source" class="form-control bg-light">
+                                    Agent Requested Rate
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="admin_remarks" class="form-label">Admin Remarks</label>
+                        <textarea class="form-control" id="admin_remarks" name="admin_remarks" 
+                                  rows="3" placeholder="Optional remarks about the decision"></textarea>
+                    </div>
+                    
+                    <!-- Hidden fields for MIS matching -->
+                    <input type="hidden" id="mis_data_id" name="mis_data_id">
+                    <input type="hidden" id="confidence" name="confidence">
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Approve Claim
+                        </button>
+                        
+                        <button type="button" class="btn btn-warning" onclick="resetSelection()">
+                            <i class="fas fa-undo me-2"></i>Reset Selection
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Reject Form -->
+                <hr class="my-4">
+                <form method="POST" action="{{ url_for('admin.reject_claim', claim_id=claim.id) }}" 
+                      onsubmit="return confirm('Are you sure you want to reject this claim?')">
+                    <div class="mb-3">
+                        <label for="reject_remarks" class="form-label">Rejection Reason</label>
+                        <textarea class="form-control" id="reject_remarks" name="admin_remarks" 
+                                  rows="2" placeholder="Reason for rejection" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Reject Claim
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const loanAmount = {{ claim.loan_amount }};
+const originalPercentage = {{ claim.payout_percentage }};
+
+function selectMatch(misDataId, confidence, misPayoutAmount, misLoanAmount) {
+    // Set MIS data for matching
+    document.getElementById('mis_data_id').value = misDataId;
+    document.getElementById('confidence').value = confidence;
+    
+    // Calculate MIS percentage
+    const misPercentage = misLoanAmount > 0 ? (misPayoutAmount / misLoanAmount * 100) : 0;
+    
+    // Update payout percentage to MIS rate
+    document.getElementById('final_payout_percentage').value = misPercentage.toFixed(2);
+    
+    // Update calculated amount
+    updateCalculatedAmount();
+    
+    // Update payout source
+    document.getElementById('payout_source').textContent = 'MIS Data Rate';
+    
+    // Visual feedback
+    document.querySelectorAll('.border-success').forEach(el => {
+        el.classList.remove('border-success', 'bg-light');
+        el.classList.add('border-secondary');
+    });
+    
+    // Highlight selected match
+    event.target.closest('.border').classList.remove('border-secondary', 'border-warning');
+    event.target.closest('.border').classList.add('border-success', 'bg-light');
+    
+    // Update button text
+    event.target.textContent = 'Selected';
+    event.target.disabled = true;
+}
+
+function resetSelection() {
+    // Reset to agent requested rate
+    document.getElementById('final_payout_percentage').value = originalPercentage;
+    document.getElementById('mis_data_id').value = '';
+    document.getElementById('confidence').value = '';
+    
+    // Update calculated amount
+    updateCalculatedAmount();
+    
+    // Update payout source
+    document.getElementById('payout_source').textContent = 'Agent Requested Rate';
+    
+    // Reset visual feedback
+    document.querySelectorAll('.border-success').forEach(el => {
+        el.classList.remove('border-success', 'bg-light');
+        el.classList.add('border-secondary');
+    });
+    
+    // Reset all select buttons
+    document.querySelectorAll('button[onclick^="selectMatch"]').forEach(btn => {
+        btn.textContent = 'Select This Match';
+        btn.disabled = false;
+    });
+}
+
+function updateCalculatedAmount() {
+    const percentage = parseFloat(document.getElementById('final_payout_percentage').value) || 0;
+    const amount = loanAmount * percentage / 100;
+    document.getElementById('calculated_amount').textContent = 
+        '₹' + amount.toLocaleString('en-IN', {maximumFractionDigits: 0});
+}
+
+// Update amount when percentage changes
+document.getElementById('final_payout_percentage').addEventListener('input', updateCalculatedAmount);
+
+// Initialize
+updateCalculatedAmount();
+</script>
+{% endblock %}

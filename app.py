@@ -10,6 +10,7 @@ from data.routes import data_bp
 from auth.routes import auth_bp
 from agent.routes import agent_bp
 from case_claims.routes import case_claims_bp
+from admin.routes import admin_bp
 
 def create_app():
     app = Flask(__name__)
@@ -60,6 +61,7 @@ def create_app():
     app.register_blueprint(data_bp)
     app.register_blueprint(agent_bp)
     app.register_blueprint(case_claims_bp)
+    app.register_blueprint(admin_bp)
     
     return app
 

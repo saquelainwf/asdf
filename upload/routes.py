@@ -8,6 +8,7 @@ from services.csv_parser import parse_csv_file
 from services.validator import validate_csv_data
 from utils.helpers import parse_date
 from auth.decorators import admin_required
+from case_claims.db import trigger_bulk_matching
 from .db import get_banks_categories, save_upload_session, save_duplicates, get_upload_session, update_upload_session
 
 upload_bp = Blueprint('upload', __name__)
@@ -138,6 +139,24 @@ def submit_data(session_id):
         
         # Insert approved rows with updated values
         inserted_count = insert_approved_data(upload_session, original_data, approved_rows, updated_data)
+
+        if inserted_count > 0:
+            try:
+                # Trigger auto-matching for all pending case claims
+                matching_results = trigger_bulk_matching()
+                if matching_results:
+                    matched_count = len([r for r in matching_results if r['status'] in ['matched', 'disputed']])
+                    if matched_count > 0:
+                        flash(f'Successfully imported {inserted_count} records! Auto-matched {matched_count} case claims.', 'success')
+                    else:
+                        flash(f'Successfully imported {inserted_count} records!', 'success')
+                else:
+                    flash(f'Successfully imported {inserted_count} records!', 'success')
+            except Exception as e:
+                print(f"Auto-matching failed after MIS upload: {e}")
+                flash(f'Successfully imported {inserted_count} records!', 'success')
+        else:
+            flash('No records were imported. Please check the data and try again.', 'error')
         
         # Update upload session
         update_upload_session(session_id, inserted_count)

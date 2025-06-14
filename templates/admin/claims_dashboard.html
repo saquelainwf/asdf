@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Claims Management - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-tasks me-2"></i>Case Claims Management
+                        </h2>
+                        <p class="text-muted mb-0">Review and approve agent case claims</p>
+                    </div>
+                    <div>
+                        <form method="POST" action="{{ url_for('admin.run_bulk_matching') }}" class="d-inline">
+                            <button type="submit" class="btn btn-warning me-2">
+                                <i class="fas fa-sync me-1"></i>Run Matching
+                            </button>
+                        </form>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ stats.total_claims or 0 }}</h4>
+                <small class="text-muted">Total Claims</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">{{ stats.pending_claims or 0 }}</h4>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-double fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ stats.matched_claims or 0 }}</h4>
+                <small class="text-muted">Matched</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-question-circle fa-2x text-info mb-2"></i>
+                <h4 class="text-info">{{ stats.disputed_claims or 0 }}</h4>
+                <small class="text-muted">Disputed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-times-circle fa-2x text-dark mb-2"></i>
+                <h4 class="text-dark">{{ stats.unmatched_claims or 0 }}</h4>
+                <small class="text-muted">Unmatched</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-thumbs-up fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ stats.approved_claims or 0 }}</h4>
+                <small class="text-muted">Approved</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="claimsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {{ 'active' if current_filter == 'matched' or current_filter == '' }}" 
+                           href="{{ url_for('admin.claims_dashboard', status='matched') }}">
+                            <i class="fas fa-check-double me-1"></i>
+                            Matched ({{ stats.matched_claims or 0 }})
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {{ 'active' if current_filter == 'disputed' }}" 
+                           href="{{ url_for('admin.claims_dashboard', status='disputed') }}">
+                            <i class="fas fa-question-circle me-1"></i>
+                            Disputed ({{ stats.disputed_claims or 0 }})
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {{ 'active' if current_filter == 'unmatched' }}" 
+                           href="{{ url_for('admin.claims_dashboard', status='unmatched') }}">
+                            <i class="fas fa-times-circle me-1"></i>
+                            Unmatched ({{ stats.unmatched_claims or 0 }})
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {{ 'active' if current_filter == 'pending' }}" 
+                           href="{{ url_for('admin.claims_dashboard', status='pending') }}">
+                            <i class="fas fa-clock me-1"></i>
+                            Pending ({{ stats.pending_claims or 0 }})
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link {{ 'active' if current_filter == 'approved' }}" 
+                           href="{{ url_for('admin.claims_dashboard', status='approved') }}">
+                            <i class="fas fa-thumbs-up me-1"></i>
+                            Approved ({{ stats.approved_claims or 0 }})
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-0">
+                {% if claims %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Claim Details</th>
+                                <th>Agent</th>
+                                <th>Customer</th>
+                                <th>Loan Info</th>
+                                <th>Payout Request</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for claim in claims %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-primary">#{{ claim.id }}</div>
+                                    <small class="text-muted">{{ claim.claim_date.strftime('%d %b %Y') }}</small>
+                                    {% if claim.loan_ac_no %}
+                                    <br><small class="badge bg-info">{{ claim.loan_ac_no }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ claim.agent_name }}</div>
+                                    <small class="text-muted">{{ claim.agent_email }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ claim.customer_name }}</div>
+                                    <small class="text-muted">{{ claim.customer_phone }}</small>
+                                </td>
+                                <td>
+                                    <div>{{ claim.bank_name }}</div>
+                                    <small class="text-muted">{{ claim.product_type }}</small>
+                                    <br><span class="fw-bold text-success">₹{{ "{:,.0f}".format(claim.loan_amount) }}</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ claim.payout_percentage }}%</div>
+                                    <small class="text-primary">₹{{ "{:,.0f}".format(claim.loan_amount * claim.payout_percentage / 100) }}</small>
+                                    {% if claim.final_payout_amount %}
+                                    <br><small class="text-success">
+                                        Final: ₹{{ "{:,.0f}".format(claim.final_payout_amount) }}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if claim.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif claim.status == 'matched' %}
+                                        <span class="badge bg-success">Matched</span>
+                                    {% elif claim.status == 'disputed' %}
+                                        <span class="badge bg-info">Disputed</span>
+                                    {% elif claim.status == 'unmatched' %}
+                                        <span class="badge bg-dark">Unmatched</span>
+                                    {% elif claim.status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% elif claim.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if claim.status in ['matched', 'disputed', 'unmatched', 'pending'] %}
+                                    <a href="{{ url_for('admin.review_claim', claim_id=claim.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>Review
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">{{ claim.status.title() }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if claim.admin_remarks %}
+                            <tr class="table-light">
+                                <td colspan="7">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comment me-1"></i>
+                                        <strong>Admin Remarks:</strong> {{ claim.admin_remarks }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Claims Found</h5>
+                    <p class="text-muted">
+                        {% if current_filter %}
+                            No claims with status "{{ current_filter }}" found.
+                        {% else %}
+                            No case claims have been submitted yet.
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('admin.claims_dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-list me-1"></i>View All Claims
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Information -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Status Definitions</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="mb-0">
+                        <li><strong>Matched:</strong> High confidence (≥90%) match with MIS data</li>
+                        <li><strong>Disputed:</strong> Medium confidence (60-89%) match found</li>
+                        <li><strong>Unmatched:</strong> Low confidence (<60%) or no match found</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="mb-0">
+                        <li><strong>Pending:</strong> Awaiting auto-matching process</li>
+                        <li><strong>Approved:</strong> Admin approved for payout</li>
+                        <li><strong>Rejected:</strong> Admin rejected the claim</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh every 30 seconds for pending claims
+    if (window.location.search.includes('status=pending')) {
+        setTimeout(function() {
+            window.location.reload();
+        }, 30000);
+    }
+});
+</script>
+{% endblock %}
