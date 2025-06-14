@@ -48,10 +48,10 @@
                         <a class="nav-link" href="{{ url_for('agent.dashboard') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
-                        <a class="nav-link disabled" href="#">
-                            <i class="fas fa-plus me-1"></i>Claim Cases
+                        <a class="nav-link" href="{{ url_for('case_claims.claim_case_form') }}">
+                            <i class="fas fa-plus me-1"></i>Claim Case
                         </a>
-                        <a class="nav-link disabled" href="#">
+                        <a class="nav-link" href="{{ url_for('case_claims.my_claims') }}">
                             <i class="fas fa-list me-1"></i>My Claims
                         </a>
                     {% endif %}

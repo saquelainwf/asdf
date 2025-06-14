@@ -13,16 +13,13 @@
                 </h1>
                 <p class="lead text-muted">Welcome back, {{ agent_name }}! Manage your case claims efficiently.</p>
                 <div class="mt-4">
-                    <button class="btn btn-primary btn-lg me-3" disabled>
+                    <a href="{{ url_for('case_claims.claim_case_form') }}" class="btn btn-primary btn-lg me-3">
                         <i class="fas fa-plus me-2"></i>Claim New Case
-                    </button>
-                    <button class="btn btn-outline-primary btn-lg" disabled>
+                    </a>
+                    <a href="{{ url_for('case_claims.my_claims') }}" class="btn btn-outline-primary btn-lg">
                         <i class="fas fa-list me-2"></i>View My Claims
-                    </button>
+                    </a>
                 </div>
-                <small class="text-muted d-block mt-2">
-                    <i class="fas fa-info-circle me-1"></i>Case claiming functionality coming soon
-                </small>
             </div>
         </div>
     </div>
@@ -60,9 +57,9 @@
     <div class="col-lg-3 col-md-6 mb-3">
         <div class="card h-100">
             <div class="card-body text-center">
-                <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
-                <h2 class="display-4 text-danger">{{ stats.rejected_claims }}</h2>
-                <p class="text-muted mb-0">Rejected Claims</p>
+                <i class="fas fa-rupee-sign fa-3x text-info mb-3"></i>
+                <h2 class="display-4 text-info">{{ "{:,.0f}".format(stats.total_earnings) }}</h2>
+                <p class="text-muted mb-0">Total Earnings (₹)</p>
             </div>
         </div>
     </div>
@@ -74,27 +71,58 @@
         <div class="card h-100">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>Recent Activity
+                    <i class="fas fa-history me-2"></i>Recent Claims
                 </h5>
             </div>
             <div class="card-body">
                 {% if recent_activity %}
                     {% for activity in recent_activity %}
-                    <div class="mb-3 pb-3 border-bottom">
+                    <div class="mb-3 pb-3 {{ 'border-bottom' if not loop.last }}">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <h6 class="mb-1">{{ activity.title }}</h6>
-                                <small class="text-muted">{{ activity.description }}</small>
+                                <h6 class="mb-1">{{ activity.customer_name }}</h6>
+                                <small class="text-muted">
+                                    {{ activity.bank_name }} - ₹{{ "{:,.0f}".format(activity.loan_amount) }}
+                                </small>
+                                <br>
+                                {% if activity.status == 'approved' and activity.final_payout_amount %}
+                                <small class="text-success">
+                                    <i class="fas fa-check me-1"></i>
+                                    Approved: ₹{{ "{:,.0f}".format(activity.final_payout_amount) }}
+                                </small>
+                                {% elif activity.status == 'pending' %}
+                                <small class="text-warning">
+                                    <i class="fas fa-clock me-1"></i>Under Review
+                                </small>
+                                {% elif activity.status == 'rejected' %}
+                                <small class="text-danger">
+                                    <i class="fas fa-times me-1"></i>Rejected
+                                </small>
+                                {% else %}
+                                <small class="text-info">
+                                    <i class="fas fa-search me-1"></i>{{ activity.status.title() }}
+                                </small>
+                                {% endif %}
                             </div>
-                            <small class="text-muted">{{ activity.date }}</small>
+                            <small class="text-muted">
+                                {{ activity.created_at.strftime('%d %b') }}
+                            </small>
                         </div>
                     </div>
                     {% endfor %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('case_claims.my_claims') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View All Claims
+                        </a>
+                    </div>
                 {% else %}
-                    <div class="text-center text-muted py-5">
+                    <div class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-3x mb-3"></i>
-                        <p>No recent activity</p>
-                        <small>Your case claims and updates will appear here</small>
+                        <p>No claims submitted yet</p>
+                        <a href="{{ url_for('case_claims.claim_case_form') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Submit Your First Claim
+                        </a>
                     </div>
                 {% endif %}
             </div>
@@ -111,12 +139,12 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-3">
-                    <button class="btn btn-outline-primary" disabled>
-                        <i class="fas fa-search me-2"></i>Search Cases
-                    </button>
-                    <button class="btn btn-outline-success" disabled>
-                        <i class="fas fa-file-upload me-2"></i>Bulk Claim
-                    </button>
+                    <a href="{{ url_for('case_claims.claim_case_form') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>New Claim
+                    </a>
+                    <a href="{{ url_for('case_claims.my_claims') }}" class="btn btn-outline-success">
+                        <i class="fas fa-list me-2"></i>My Claims
+                    </a>
                     <button class="btn btn-outline-info" disabled>
                         <i class="fas fa-download me-2"></i>Export Data
                     </button>
@@ -125,33 +153,52 @@
                     </button>
                 </div>
                 <small class="text-muted d-block mt-3 text-center">
-                    <i class="fas fa-wrench me-1"></i>Features under development
+                    <i class="fas fa-wrench me-1"></i>Some features under development
                 </small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Information Alert -->
+<!-- Performance Summary -->
+{% if stats.total_claims > 0 %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="alert alert-info">
-            <h6><i class="fas fa-info-circle me-2"></i>Agent Portal Information</h6>
-            <p class="mb-0">
-                Welcome to your agent dashboard! This is where you'll be able to claim disbursement cases, 
-                track your submissions, and manage your portfolio. The case claiming functionality will be 
-                implemented in the next phase of development.
-            </p>
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Performance Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h5 class="text-primary">{{ "{:.1f}".format((stats.approved_claims / stats.total_claims) * 100) }}%</h5>
+                        <small class="text-muted">Approval Rate</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-warning">{{ "{:.1f}".format((stats.pending_claims / stats.total_claims) * 100) }}%</h5>
+                        <small class="text-muted">Under Review</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-info">₹{{ "{:,.0f}".format(stats.total_earnings / stats.approved_claims if stats.approved_claims > 0 else 0) }}</h5>
+                        <small class="text-muted">Avg. Payout</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-success">{{ stats.total_claims }}</h5>
+                        <small class="text-muted">Total Submissions</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add any agent-specific JavaScript here
-    console.log('Agent dashboard loaded');
+    // Add any agent dashboard specific JavaScript here
+    console.log('Agent dashboard with case claims loaded');
 });
 </script>
 {% endblock %}

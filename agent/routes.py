@@ -10,7 +10,7 @@ def dashboard():
     """Agent dashboard page"""
     agent_id = session.get('user_id')
     
-    # Get agent statistics
+    # Get agent statistics (this will now include case claims data)
     stats = get_agent_stats(agent_id)
     recent_activity = get_agent_recent_activity(agent_id)
     

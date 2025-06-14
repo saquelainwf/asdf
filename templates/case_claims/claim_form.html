@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Claim New Case - Agent Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>Claim New Case
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Instructions -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Case Claim Guidelines</h6>
+                    <ul class="mb-0">
+                        <li>Fill in all customer details accurately</li>
+                        <li>Loan Account Number is optional but helps in faster matching</li>
+                        <li>Set your expected payout percentage based on your agreement</li>
+                        <li>All claims will be reviewed by admin before approval</li>
+                    </ul>
+                </div>
+
+                <!-- Claim Form -->
+                <form method="POST" id="claimForm">
+                    <div class="row">
+                        <!-- Customer Information -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>Customer Information
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="customer_name" class="form-label">
+                                    Customer Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="customer_name" 
+                                       name="customer_name" required placeholder="Enter customer full name">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="customer_phone" class="form-label">
+                                    Phone Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="customer_phone" 
+                                       name="customer_phone" required placeholder="10-digit mobile number"
+                                       pattern="[0-9]{10}" maxlength="10">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="loan_ac_no" class="form-label">
+                                    Loan Account Number <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" id="loan_ac_no" 
+                                       name="loan_ac_no" placeholder="If available, helps in matching">
+                            </div>
+                        </div>
+
+                        <!-- Loan Information -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-money-bill-wave me-2"></i>Loan Information
+                            </h5>
+
+                            <div class="mb-3">
+                                <label for="bank_name" class="form-label">
+                                    Bank Name <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="bank_name" name="bank_name" required>
+                                    <option value="">Select Bank</option>
+                                    {% for bank in banks %}
+                                    <option value="{{ bank.bank_name }}">{{ bank.bank_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="product_type" class="form-label">
+                                    Product Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="product_type" name="product_type" required>
+                                    <option value="">Select Product</option>
+                                    <option value="Personal Loan">Personal Loan</option>
+                                    <option value="Home Loan">Home Loan</option>
+                                    <option value="Business Loan">Business Loan</option>
+                                    <option value="Auto Loan">Auto Loan</option>
+                                    <option value="Loan Against Property">Loan Against Property</option>
+                                    <option value="Secured Loan">Secured Loan</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="loan_amount" class="form-label">
+                                    Loan Amount <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" id="loan_amount" 
+                                           name="loan_amount" required placeholder="Enter loan amount"
+                                           min="1000" step="1000">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="application_date" class="form-label">
+                                    Application Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="application_date" 
+                                       name="application_date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payout Information -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-percentage me-2"></i>Payout Information
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="payout_percentage" class="form-label">
+                                            Payout Percentage <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="payout_percentage" 
+                                                   name="payout_percentage" required placeholder="1.50"
+                                                   min="0.01" max="10.00" step="0.01">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">Enter percentage (e.g., 1.50 for 1.5%)</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label class="form-label">Expected Payout Amount</label>
+                                        <div class="form-control bg-light" id="expected_payout">₹0.00</div>
+                                        <small class="text-muted">Calculated automatically based on loan amount and percentage</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Case Claim
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loanAmountInput = document.getElementById('loan_amount');
+    const payoutPercentageInput = document.getElementById('payout_percentage');
+    const expectedPayoutDiv = document.getElementById('expected_payout');
+    const submitBtn = document.getElementById('submitBtn');
+    const claimForm = document.getElementById('claimForm');
+
+    // Calculate expected payout
+    function calculatePayout() {
+        const loanAmount = parseFloat(loanAmountInput.value) || 0;
+        const payoutPercentage = parseFloat(payoutPercentageInput.value) || 0;
+        const expectedPayout = (loanAmount * payoutPercentage) / 100;
+        
+        expectedPayoutDiv.textContent = '₹' + expectedPayout.toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    // Update calculation on input change
+    loanAmountInput.addEventListener('input', calculatePayout);
+    payoutPercentageInput.addEventListener('input', calculatePayout);
+
+    // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('application_date').setAttribute('max', today);
+
+    // Phone number validation
+    document.getElementById('customer_phone').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').substring(0, 10);
+    });
+
+    // Form submission
+    claimForm.addEventListener('submit', function(e) {
+        const phoneNumber = document.getElementById('customer_phone').value;
+        if (phoneNumber.length !== 10) {
+            e.preventDefault();
+            alert('Please enter a valid 10-digit phone number.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    });
+
+    // Initialize calculation
+    calculatePayout();
+});
+</script>
+{% endblock %}

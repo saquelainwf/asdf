@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}My Claims - Agent Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-list me-2"></i>My Case Claims
+                        </h2>
+                        <p class="text-muted mb-0">Track and manage your submitted case claims</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('case_claims.claim_case_form') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Claim New Case
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+                <h2 class="display-4 text-primary">{{ stats.total_claims }}</h2>
+                <p class="text-muted mb-0">Total Claims</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                <h2 class="display-4 text-warning">{{ stats.pending_claims }}</h2>
+                <p class="text-muted mb-0">Pending Review</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h2 class="display-4 text-success">{{ stats.approved_claims }}</h2>
+                <p class="text-muted mb-0">Approved</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-rupee-sign fa-3x text-info mb-3"></i>
+                <h2 class="display-4 text-info">{{ "{:,.0f}".format(stats.total_earnings) }}</h2>
+                <p class="text-muted mb-0">Total Earnings (₹)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Claims Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>All Claims
+                </h5>
+                <div>
+                    <select class="form-select form-select-sm text-dark" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="matched">Matched</option>
+                        <option value="disputed">Disputed</option>
+                        <option value="unmatched">Unmatched</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if claims %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="claimsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Customer</th>
+                                <th>Bank</th>
+                                <th>Product</th>
+                                <th>Loan Amount</th>
+                                <th>Requested %</th>
+                                <th>Expected Payout</th>
+                                <th>Final Payout</th>
+                                <th>Status</th>
+                                <th>Claim Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for claim in claims %}
+                            <tr data-status="{{ claim.status }}">
+                                <td>
+                                    <span class="fw-bold text-primary">#{{ claim.id }}</span>
+                                    {% if claim.loan_ac_no %}
+                                    <br><small class="text-muted">{{ claim.loan_ac_no }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ claim.customer_name }}</div>
+                                    <small class="text-muted">{{ claim.customer_phone }}</small>
+                                </td>
+                                <td>{{ claim.bank_name }}</td>
+                                <td>{{ claim.product_type }}</td>
+                                <td>
+                                    <span class="fw-bold text-success">₹{{ "{:,.0f}".format(claim.loan_amount) }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ claim.payout_percentage }}%</span>
+                                </td>
+                                <td>
+                                    <span class="text-primary fw-bold">
+                                        ₹{{ "{:,.0f}".format(claim.loan_amount * claim.payout_percentage / 100) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if claim.final_payout_amount %}
+                                        <span class="text-success fw-bold">₹{{ "{:,.0f}".format(claim.final_payout_amount) }}</span>
+                                        {% if claim.final_payout_percentage %}
+                                        <br><small class="text-muted">({{ claim.final_payout_percentage }}%)</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if claim.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif claim.status == 'matched' %}
+                                        <span class="badge bg-info">Matched</span>
+                                    {% elif claim.status == 'disputed' %}
+                                        <span class="badge bg-secondary">Disputed</span>
+                                    {% elif claim.status == 'unmatched' %}
+                                        <span class="badge bg-dark">Unmatched</span>
+                                    {% elif claim.status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% elif claim.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>{{ claim.claim_date.strftime('%d %b %Y') }}</div>
+                                    <small class="text-muted">{{ claim.claim_date.strftime('%I:%M %p') }}</small>
+                                </td>
+                            </tr>
+                            {% if claim.admin_remarks %}
+                            <tr class="table-light">
+                                <td colspan="10">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comment me-1"></i>
+                                        <strong>Admin Remarks:</strong> {{ claim.admin_remarks }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Claims Found</h5>
+                    <p class="text-muted">You haven't submitted any case claims yet.</p>
+                    <a href="{{ url_for('case_claims.claim_case_form') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Submit Your First Claim
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Legend -->
+{% if claims %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Status Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li><span class="badge bg-warning me-2">Pending</span> Submitted for admin review</li>
+                            <li><span class="badge bg-info me-2">Matched</span> High confidence match found with MIS data</li>
+                            <li><span class="badge bg-secondary me-2">Disputed</span> Partial match found, under review</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li><span class="badge bg-dark me-2">Unmatched</span> No match found in MIS data</li>
+                            <li><span class="badge bg-success me-2">Approved</span> Claim approved, payout confirmed</li>
+                            <li><span class="badge bg-danger me-2">Rejected</span> Claim rejected by admin</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status filter functionality
+    const statusFilter = document.getElementById('statusFilter');
+    const tableRows = document.querySelectorAll('#claimsTable tbody tr[data-status]');
+    
+    statusFilter.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        
+        tableRows.forEach(row => {
+            if (!selectedStatus || row.getAttribute('data-status') === selectedStatus) {
+                row.style.display = '';
+                // Also show admin remarks row if it exists
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('table-light')) {
+                    nextRow.style.display = '';
+                }
+            } else {
+                row.style.display = 'none';
+                // Also hide admin remarks row if it exists
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('table-light')) {
+                    nextRow.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
