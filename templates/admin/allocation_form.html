@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Payout Allocation - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-percentage me-2"></i>Payout Allocation
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Invoice: {{ invoice.invoice_number }} | Agent: {{ invoice.agent_name }} | 
+                            Amount: ₹{{ "{:,.0f}".format(invoice.total_amount) }}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('payouts.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Payouts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoice Summary -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>Proforma Invoice Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Invoice Number:</td>
+                                <td>{{ invoice.invoice_number }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Agent:</td>
+                                <td>{{ invoice.agent_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Month:</td>
+                                <td>{{ invoice.invoice_month.strftime('%B %Y') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Total Claims:</td>
+                                <td>{{ items|length }} claims</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Total Amount:</td>
+                                <td class="text-success fw-bold">₹{{ "{:,.0f}".format(invoice.total_amount) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Status:</td>
+                                <td><span class="badge bg-warning">{{ invoice.status.title() }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Subconnectors -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Available Subconnectors
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if subconnectors %}
+                    {% for sub in subconnectors %}
+                    <div class="mb-2 p-2 border rounded">
+                        <div class="fw-bold">{{ sub.subconnector_name }}</div>
+                        <small class="text-muted">{{ sub.mobile_number }}</small>
+                        {% if sub.pan_number %}
+                        <br><small class="badge bg-info">{{ sub.pan_number }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No subconnectors available for this agent.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Allocation Form -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calculator me-2"></i>Allocation Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if existing_allocation %}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Allocation Already Exists</h6>
+                    <p class="mb-2">An allocation has already been created for this invoice and month.</p>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('payouts.delete_allocation') }}" class="d-inline" 
+                            onsubmit="return confirm('Are you sure you want to delete the existing allocation and create a new one?')">
+                            <input type="hidden" name="agent_id" value="{{ invoice.agent_id }}">
+                            <input type="hidden" name="invoice_month" value="{{ invoice.invoice_month.strftime('%Y-%m') }}">
+                            <input type="hidden" name="return_to" value="{{ url_for('payouts.allocation_form', invoice_id=invoice.id) }}">
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete & Recreate Allocation
+                            </button>
+                        </form>
+                        <a href="{{ url_for('payouts.generate_final_invoices', allocation_id=existing_allocation.id) }}" 
+                        class="btn btn-success btn-sm">
+                            <i class="fas fa-forward me-1"></i>Generate Final Invoices
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <form method="POST" id="allocationForm">
+                    <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                    <input type="hidden" name="total_amount" value="{{ invoice.total_amount }}">
+                    
+                    <!-- Allocation Strategy -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Allocation Strategy:</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="strategy" 
+                                       id="single_invoice" value="single" checked onchange="updateStrategy()">
+                                <label class="form-check-label" for="single_invoice">
+                                    Single Invoice (No Split)
+                                </label>
+                            </div>
+                            {% if subconnectors %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="strategy" 
+                                       id="split_invoice" value="split" onchange="updateStrategy()">
+                                <label class="form-check-label" for="split_invoice">
+                                    Split Across Subconnectors
+                                </label>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Single Invoice Option -->
+                    <div id="singleOption" class="mb-4">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Single Invoice</h6>
+                            <p class="mb-0">Create one final invoice for the main agent with the full amount: ₹{{ "{:,.0f}".format(invoice.total_amount) }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Split Options -->
+                    <div id="splitOptions" style="display: none;">
+                        {% if subconnectors %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Subconnector Allocation:</label>
+                        </div>
+                        
+                        <div id="allocationRows">
+                            <!-- Allocation rows will be added dynamically -->
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addAllocationRow()">
+                                <i class="fas fa-plus me-1"></i>Add Subconnector
+                            </button>
+                        </div>
+                        
+                        <!-- Allocation Summary -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6>Allocation Summary:</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Percentage:</span>
+                                            <span id="totalPercentage" class="fw-bold">0%</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Amount:</span>
+                                            <span id="totalAllocated" class="fw-bold">₹0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Remaining:</span>
+                                            <span id="remainingAmount" class="fw-bold">₹{{ "{:,.0f}".format(invoice.total_amount) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="fas fa-check me-2"></i>Create Final Invoices
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Subconnectors Data (Hidden) -->
+<script type="application/json" id="subconnectorsData">
+{{ subconnectors | tojson }}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const totalAmount = {{ invoice.total_amount }};
+const subconnectors = JSON.parse(document.getElementById('subconnectorsData').textContent);
+let allocationRowCount = 0;
+
+function updateStrategy() {
+    const strategy = document.querySelector('input[name="strategy"]:checked').value;
+    const singleOption = document.getElementById('singleOption');
+    const splitOptions = document.getElementById('splitOptions');
+    
+    if (strategy === 'single') {
+        singleOption.style.display = 'block';
+        splitOptions.style.display = 'none';
+    } else {
+        singleOption.style.display = 'none';
+        splitOptions.style.display = 'block';
+        if (document.getElementById('allocationRows').children.length === 0) {
+            addAllocationRow();
+        }
+    }
+}
+
+function addAllocationRow() {
+    const container = document.getElementById('allocationRows');
+    const rowId = allocationRowCount++;
+    
+    const row = document.createElement('div');
+    row.className = 'row mb-3 allocation-row';
+    row.id = `row_${rowId}`;
+    
+    row.innerHTML = `
+        <div class="col-md-5">
+            <select class="form-control" name="subconnector_${rowId}" required>
+                <option value="">Select Subconnector</option>
+                ${subconnectors.map(sub => 
+                    `<option value="${sub.id}">${sub.subconnector_name}</option>`
+                ).join('')}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="number" class="form-control percentage-input" 
+                       name="percentage_${rowId}" placeholder="0.00" 
+                       min="0.01" max="100" step="0.01" 
+                       onchange="updateCalculations()" required>
+                <span class="input-group-text">%</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="text" class="form-control amount-display" readonly>
+            </div>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-outline-danger" onclick="removeAllocationRow(${rowId})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(row);
+    updateCalculations();
+}
+
+function removeAllocationRow(rowId) {
+    const row = document.getElementById(`row_${rowId}`);
+    if (row) {
+        row.remove();
+        updateCalculations();
+    }
+}
+
+function updateCalculations() {
+    const percentageInputs = document.querySelectorAll('.percentage-input');
+    const amountDisplays = document.querySelectorAll('.amount-display');
+    
+    let totalPercentage = 0;
+    let totalAllocated = 0;
+    
+    percentageInputs.forEach((input, index) => {
+        const percentage = parseFloat(input.value) || 0;
+        const amount = (totalAmount * percentage) / 100;
+        
+        totalPercentage += percentage;
+        totalAllocated += amount;
+        
+        if (amountDisplays[index]) {
+            amountDisplays[index].value = amount.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    });
+    
+    document.getElementById('totalPercentage').textContent = totalPercentage.toFixed(2) + '%';
+    document.getElementById('totalAllocated').textContent = '₹' + totalAllocated.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    document.getElementById('remainingAmount').textContent = '₹' + (totalAmount - totalAllocated).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Update submit button based on validation
+    const submitBtn = document.getElementById('submitBtn');
+    const strategy = document.querySelector('input[name="strategy"]:checked').value;
+    
+    if (strategy === 'split') {
+        const isValid = Math.abs(totalPercentage - 100) < 0.01 && percentageInputs.length > 0;
+        submitBtn.disabled = !isValid;
+        
+        if (totalPercentage > 100) {
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Total exceeds 100%';
+            submitBtn.className = 'btn btn-danger btn-lg';
+        } else if (totalPercentage < 100) {
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Total less than 100%';
+            submitBtn.className = 'btn btn-warning btn-lg';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Create Final Invoices';
+            submitBtn.className = 'btn btn-success btn-lg';
+        }
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Create Final Invoice';
+        submitBtn.className = 'btn btn-success btn-lg';
+    }
+}
+
+// Form submission validation
+document.getElementById('allocationForm').addEventListener('submit', function(e) {
+    const strategy = document.querySelector('input[name="strategy"]:checked').value;
+    
+    if (strategy === 'split') {
+        const percentageInputs = document.querySelectorAll('.percentage-input');
+        const totalPercentage = Array.from(percentageInputs).reduce((sum, input) => 
+            sum + (parseFloat(input.value) || 0), 0);
+        
+        if (Math.abs(totalPercentage - 100) > 0.01) {
+            e.preventDefault();
+            alert('Allocation percentages must total 100%');
+            return;
+        }
+        
+        if (percentageInputs.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one subconnector allocation');
+            return;
+        }
+    }
+});
+
+// Initialize
+updateStrategy();
+</script>
+{% endblock %}

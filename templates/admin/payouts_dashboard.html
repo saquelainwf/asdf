@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Payout Management - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-money-check-alt me-2"></i>Payout Management
+                        </h2>
+                        <p class="text-muted mb-0">Generate proforma invoices and manage agent payouts</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">{{ stats.agents_with_pending or 0 }}</h4>
+                <small class="text-muted">Agents with Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-list fa-2x text-info mb-2"></i>
+                <h4 class="text-info">{{ stats.total_pending_claims or 0 }}</h4>
+                <small class="text-muted">Pending Claims</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-rupee-sign fa-2x text-success mb-2"></i>
+                <h4 class="text-success">₹{{ "{:,.0f}".format(stats.total_pending_amount or 0) }}</h4>
+                <small class="text-muted">Total Pending Amount</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-file-invoice fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ stats.recent_proforma_count or 0 }}</h4>
+                <small class="text-muted">Recent Proformas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agents with Pending Payouts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Agents with Pending Payouts
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if agents %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Agent Details</th>
+                                <th>Pending Claims</th>
+                                <th>Total Amount</th>
+                                <th>Date Range</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agents %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ agent.agent_name }}</div>
+                                    <small class="text-muted">{{ agent.agent_email }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ agent.approved_claims_count }} claims</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">₹{{ "{:,.0f}".format(agent.total_pending_amount) }}</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ agent.oldest_approval_date.strftime('%d %b') }} - 
+                                        {{ agent.latest_approval_date.strftime('%d %b %Y') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('payouts.generate_proforma', agent_id=agent.agent_id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-file-invoice me-1"></i>Generate Proforma
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-muted">All Caught Up!</h5>
+                    <p class="text-muted">No agents have pending payouts at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Proforma Invoices -->
+{% if recent_invoices %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Proforma Invoices
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Agent</th>
+                                <th>Month</th>
+                                <th>Amount</th>
+                                <th>Items</th>
+                                <th>Status</th>
+                                <th>Generated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">{{ invoice.invoice_number }}</span>
+                                </td>
+                                <td>{{ invoice.agent_name }}</td>
+                                <td>{{ invoice.invoice_month.strftime('%B %Y') }}</td>
+                                <td>
+                                    <span class="fw-bold text-success">₹{{ "{:,.0f}".format(invoice.total_amount) }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ invoice.items_count }} claims</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if invoice.status == 'approved' else 'warning' if invoice.status == 'generated' else 'secondary' }}">
+                                        {{ invoice.status.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ invoice.generated_at.strftime('%d %b %Y') }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('payouts.allocation_form', invoice_id=invoice.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-cogs me-1"></i>Allocate
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
