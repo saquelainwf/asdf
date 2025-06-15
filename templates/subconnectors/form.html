@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_mode %}Edit{% else %}Add New{% endif %} Subconnector - Agent Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-{% if edit_mode %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if edit_mode %}Edit Subconnector{% else %}Add New Subconnector{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Form -->
+                <form method="POST" id="subconnectorForm">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Basic Information
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="subconnector_name" class="form-label">
+                                    Subconnector Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="subconnector_name" 
+                                       name="subconnector_name" required
+                                       value="{{ data.subconnector_name if data else (subconnector.subconnector_name if edit_mode else '') }}"
+                                       placeholder="Enter business/entity name">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="mobile_number" class="form-label">
+                                    Mobile Number <span class="text-danger">*</span>
+                                </label>
+                                <input type="tel" class="form-control" id="mobile_number" 
+                                       name="mobile_number" required
+                                       value="{{ data.mobile_number if data else (subconnector.mobile_number if edit_mode else '') }}"
+                                       placeholder="10-digit mobile number"
+                                       pattern="[6-9][0-9]{9}" maxlength="10">
+                            </div>
+                        </div>
+
+                        <!-- Tax Information -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-file-invoice me-2"></i>Tax Information
+                            </h5>
+
+                            <div class="mb-3">
+                                <label for="pan_number" class="form-label">
+                                    PAN Number <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" id="pan_number" 
+                                       name="pan_number"
+                                       value="{{ data.pan_number if data else (subconnector.pan_number if edit_mode else '') }}"
+                                       placeholder="ABCDE1234F" maxlength="10" style="text-transform: uppercase;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="gst_number" class="form-label">
+                                    GST Number <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" id="gst_number" 
+                                       name="gst_number"
+                                       value="{{ data.gst_number if data else (subconnector.gst_number if edit_mode else '') }}"
+                                       placeholder="27ABCDE1234F1Z5" maxlength="15" style="text-transform: uppercase;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>Address Information
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">
+                                    Business Address <span class="text-muted">(Optional)</span>
+                                </label>
+                                <textarea class="form-control" id="address" name="address" 
+                                          rows="3" placeholder="Enter complete business address">{{ data.address if data else (subconnector.address if edit_mode else '') }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            {% if edit_mode %}Update Subconnector{% else %}Create Subconnector{% endif %}
+                        </button>
+                        <a href="{{ url_for('subconnectors.list_subconnectors') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile number validation
+    document.getElementById('mobile_number').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').substring(0, 10);
+    });
+
+    // PAN number formatting
+    document.getElementById('pan_number').addEventListener('input', function() {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
+    });
+
+    // GST number formatting
+    document.getElementById('gst_number').addEventListener('input', function() {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 15);
+    });
+});
+</script>
+{% endblock %}

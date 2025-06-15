@@ -11,6 +11,9 @@ from auth.routes import auth_bp
 from agent.routes import agent_bp
 from case_claims.routes import case_claims_bp
 from admin.routes import admin_bp
+from subconnectors.routes import subconnectors_bp
+from invoices.routes import invoices_bp
+from payouts.routes import payouts_bp
 
 def create_app():
     app = Flask(__name__)
@@ -62,6 +65,9 @@ def create_app():
     app.register_blueprint(agent_bp)
     app.register_blueprint(case_claims_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(subconnectors_bp)
+    app.register_blueprint(invoices_bp)
+    app.register_blueprint(payouts_bp)
     
     return app
 
