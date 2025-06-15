@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-chart-bar me-2"></i>Reports & Analytics
+                        </h2>
+                        <p class="text-muted mb-0">Comprehensive payout and tax reports</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ overview.total_agents or 0 }}</h4>
+                <small class="text-muted">Active Agents</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-file-invoice fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ overview.total_invoices or 0 }}</h4>
+                <small class="text-muted">Total Invoices</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-rupee-sign fa-2x text-info mb-2"></i>
+                <h4 class="text-info">₹{{ "{:,.0f}".format(overview.total_payouts or 0) }}</h4>
+                <small class="text-muted">Total Payouts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">₹{{ "{:,.0f}".format(overview.total_tax or 0) }}</h4>
+                <small class="text-muted">Tax Deducted</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Categories -->
+<div class="row">
+    <!-- Monthly Payout Report -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Monthly Payout Report
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('reports.monthly_report') }}">
+                    <div class="mb-3">
+                        <label for="report_month" class="form-label">Select Month</label>
+                        <input type="month" class="form-control" id="report_month" name="month" 
+                               value="{{ current_month }}" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Generate Monthly Report
+                        </button>
+                    </div>
+                </form>
+                <small class="text-muted mt-2">
+                    Includes all agent payouts, allocations, and tax deductions for the selected month.
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Performance Report -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-chart me-2"></i>Agent Performance Report
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('reports.agent_performance') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ three_months_ago }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ today }}" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-chart-line me-2"></i>Generate Performance Report
+                        </button>
+                    </div>
+                </form>
+                <small class="text-muted mt-2">
+                    Compare agent earnings, claim approval rates, and entity usage patterns.
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Summary Report -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>Tax Summary Report
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('reports.tax_summary') }}">
+                    <div class="mb-3">
+                        <label for="tax_year" class="form-label">Financial Year</label>
+                        <select class="form-select" id="tax_year" name="year" required>
+                            {% for year in available_years %}
+                            <option value="{{ year }}" {{ 'selected' if year == current_year }}>
+                                FY {{ year }}-{{ year + 1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-calculator me-2"></i>Generate Tax Report
+                        </button>
+                    </div>
+                </form>
+                <small class="text-muted mt-2">
+                    Annual tax deduction summary with TDS certificates and GST details.
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subconnector Analysis -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-building me-2"></i>Entity Analysis Report
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('reports.entity_analysis') }}">
+                    <div class="mb-3">
+                        <label for="analysis_period" class="form-label">Analysis Period</label>
+                        <select class="form-select" id="analysis_period" name="period" required>
+                            <option value="last_6_months">Last 6 Months</option>
+                            <option value="last_12_months" selected>Last 12 Months</option>
+                            <option value="current_year">Current Year</option>
+                            <option value="all_time">All Time</option>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-analytics me-2"></i>Generate Analysis
+                        </button>
+                    </div>
+                </form>
+                <small class="text-muted mt-2">
+                    Analyze subconnector usage patterns, tax optimization effectiveness, and entity performance.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Reports -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.monthly_report', month=current_month) }}" 
+                           class="btn btn-outline-primary w-100">
+                            <i class="fas fa-calendar me-2"></i>
+                            <br>Current Month Report
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.agent_performance') }}" 
+                           class="btn btn-outline-success w-100">
+                            <i class="fas fa-trophy me-2"></i>
+                            <br>Top Performers
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.tax_summary', year=current_year) }}" 
+                           class="btn btn-outline-info w-100">
+                            <i class="fas fa-receipt me-2"></i>
+                            <br>Current Year Tax
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('payouts.dashboard') }}" 
+                           class="btn btn-outline-warning w-100">
+                            <i class="fas fa-money-check-alt me-2"></i>
+                            <br>Pending Payouts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

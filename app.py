@@ -14,6 +14,7 @@ from admin.routes import admin_bp
 from subconnectors.routes import subconnectors_bp
 from invoices.routes import invoices_bp
 from payouts.routes import payouts_bp
+from reports.routes import reports_bp
 
 def create_app():
     app = Flask(__name__)
@@ -68,6 +69,7 @@ def create_app():
     app.register_blueprint(subconnectors_bp)
     app.register_blueprint(invoices_bp)
     app.register_blueprint(payouts_bp)
+    app.register_blueprint(reports_bp)
     
     return app
 

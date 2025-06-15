@@ -289,6 +289,20 @@ def create_single_final_invoice(allocation, proforma_items, admin_id, cursor):
             item['payout_amount'],
             f"Final invoice - {item['description']}"
         ))
+
+    # Calculate and update tax
+    tax_details = calculate_tax_for_entity(
+        allocation['total_approved_amount'],
+        'individual',  # Default to individual
+        None,  # No GST for main agent
+        None   # No PAN for main agent
+    )
+
+    cursor.execute("""
+        UPDATE invoices 
+        SET tax_amount = %s, net_amount = %s
+        WHERE id = %s
+    """, (tax_details['total_tax'], tax_details['net_payable'], final_invoice_id))
     
     return final_invoice_id
 
@@ -343,6 +357,29 @@ def create_split_final_invoice(allocation, alloc_data, proforma_items, admin_id,
             proportional_amount,
             f"Split allocation ({alloc_data['percentage']}%) - {item['description']}"
         ))
+
+    # Get subconnector tax details
+    cursor.execute("""
+        SELECT gst_number, pan_number FROM subconnectors WHERE id = %s
+    """, (alloc_data['subconnector_id'],))
+
+    subconnector = cursor.fetchone()
+    gst_number = subconnector['gst_number'] if subconnector else None
+    pan_number = subconnector['pan_number'] if subconnector else None
+
+    # Calculate and update tax
+    tax_details = calculate_tax_for_entity(
+        alloc_data['amount'],
+        'registered' if gst_number else 'individual',
+        gst_number,
+        pan_number
+    )
+
+    cursor.execute("""
+        UPDATE invoices 
+        SET tax_amount = %s, net_amount = %s
+        WHERE id = %s
+    """, (tax_details['total_tax'], tax_details['net_payable'], final_invoice_id))
     
     return final_invoice_id
 
@@ -598,3 +635,194 @@ def get_agent_monthly_breakdown(agent_id):
     conn.close()
     
     return months
+
+def generate_invoice_pdf_data(invoice_id):
+    """Get all data needed for PDF generation"""
+    invoice_data = get_final_invoice_details(invoice_id)
+    
+    if not invoice_data:
+        return None
+    
+    invoice = invoice_data['invoice']
+    items = invoice_data['items']
+    
+    # Calculate totals
+    subtotal = sum(float(item['payout_amount']) for item in items)
+    tax_amount = float(invoice['tax_amount'])
+    total_amount = float(invoice['total_amount'])
+    
+    pdf_data = {
+        'invoice': invoice,
+        'items': items,
+        'calculations': {
+            'subtotal': subtotal,
+            'tax_amount': tax_amount,
+            'total_amount': total_amount,
+            'items_count': len(items)
+        },
+        'generated_date': invoice['generated_at'].strftime('%d %B %Y'),
+        'approved_date': invoice['approved_at'].strftime('%d %B %Y') if invoice['approved_at'] else None
+    }
+    
+    return pdf_data
+
+def calculate_tax_for_entity(total_amount, entity_type='individual', gst_number=None, pan_number=None):
+    """Calculate tax based on entity type and amount"""
+    tax_details = {
+        'tds_rate': 0.0,
+        'gst_rate': 0.0,
+        'tds_amount': 0.0,
+        'gst_amount': 0.0,
+        'total_tax': 0.0,
+        'net_payable': total_amount
+    }
+    
+    # TDS Calculation based on amount slabs
+    if total_amount > 40000:  # TDS applicable above 40k
+        if gst_number:
+            # Registered entity - lower TDS rate
+            tax_details['tds_rate'] = 1.0  # 1%
+        else:
+            # Unregistered entity - higher TDS rate
+            tax_details['tds_rate'] = 2.0  # 2%
+        
+        tax_details['tds_amount'] = total_amount * tax_details['tds_rate'] / 100
+    
+    # GST Calculation (if applicable)
+    if gst_number and total_amount > 20000:
+        tax_details['gst_rate'] = 18.0  # 18% GST
+        tax_details['gst_amount'] = total_amount * tax_details['gst_rate'] / 100
+    
+    # Total tax and net calculation
+    tax_details['total_tax'] = tax_details['tds_amount'] + tax_details['gst_amount']
+    tax_details['net_payable'] = total_amount - tax_details['tds_amount'] + tax_details['gst_amount']
+    
+    return tax_details
+
+def update_invoice_with_tax_calculation(invoice_id):
+    """Update invoice with proper tax calculations"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get invoice and subconnector details
+    cursor.execute("""
+        SELECT i.*, s.gst_number, s.pan_number
+        FROM invoices i
+        LEFT JOIN subconnectors s ON i.subconnector_id = s.id
+        WHERE i.id = %s
+    """, (invoice_id,))
+    
+    invoice = cursor.fetchone()
+    
+    if not invoice:
+        cursor.close()
+        conn.close()
+        return False
+    
+    # Calculate tax
+    tax_details = calculate_tax_for_entity(
+        float(invoice['total_amount']),
+        'registered' if invoice.get('gst_number') else 'individual',
+        invoice.get('gst_number'),
+        invoice.get('pan_number')
+    )
+    
+    # Update invoice with tax calculations
+    cursor.execute("""
+        UPDATE invoices 
+        SET tax_amount = %s, net_amount = %s
+        WHERE id = %s
+    """, (tax_details['total_tax'], tax_details['net_payable'], invoice_id))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return tax_details
+
+def get_tax_summary_for_agent(agent_id, year=None):
+    """Get tax summary for agent across all invoices"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    year_filter = ""
+    params = [agent_id]
+    
+    if year:
+        year_filter = "AND YEAR(invoice_month) = %s"
+        params.append(year)
+    
+    cursor.execute(f"""
+        SELECT 
+            YEAR(invoice_month) as tax_year,
+            COUNT(*) as total_invoices,
+            SUM(total_amount) as gross_earnings,
+            SUM(tax_amount) as total_tax_deducted,
+            SUM(net_amount) as net_earnings,
+            COUNT(CASE WHEN subconnector_id IS NOT NULL THEN 1 END) as subconnector_invoices,
+            COUNT(CASE WHEN subconnector_id IS NULL THEN 1 END) as direct_invoices
+        FROM invoices 
+        WHERE agent_id = %s 
+            AND invoice_type = 'final' 
+            AND status = 'approved'
+            {year_filter}
+        GROUP BY YEAR(invoice_month)
+        ORDER BY tax_year DESC
+    """, params)
+    
+    summary = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return summary
+
+def generate_tax_certificate_data(agent_id, year):
+    """Generate tax certificate data for agent"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get agent details
+    cursor.execute("SELECT * FROM users WHERE id = %s", (agent_id,))
+    agent = cursor.fetchone()
+    
+    # Get yearly tax summary
+    cursor.execute("""
+        SELECT 
+            i.*,
+            s.subconnector_name,
+            s.pan_number as sub_pan,
+            s.gst_number as sub_gst
+        FROM invoices i
+        LEFT JOIN subconnectors s ON i.subconnector_id = s.id
+        WHERE i.agent_id = %s 
+            AND YEAR(i.invoice_month) = %s
+            AND i.invoice_type = 'final' 
+            AND i.status = 'approved'
+        ORDER BY i.invoice_month, i.generated_at
+    """, (agent_id, year))
+    
+    invoices = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    if not invoices:
+        return None
+    
+    # Calculate totals
+    total_gross = sum(float(inv['total_amount']) for inv in invoices)
+    total_tax = sum(float(inv['tax_amount']) for inv in invoices)
+    total_net = sum(float(inv['net_amount']) for inv in invoices)
+    
+    return {
+        'agent': agent,
+        'year': year,
+        'invoices': invoices,
+        'summary': {
+            'total_invoices': len(invoices),
+            'total_gross': total_gross,
+            'total_tax': total_tax,
+            'total_net': total_net,
+            'average_per_invoice': total_gross / len(invoices) if invoices else 0
+        }
+    }
