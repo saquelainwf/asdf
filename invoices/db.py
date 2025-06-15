@@ -510,3 +510,91 @@ def bulk_approve_invoices(invoice_ids, admin_id, admin_remarks=None):
     conn.close()
     
     return rows_affected
+
+def get_agent_final_invoices(agent_id):
+    """Get all final invoices for a specific agent"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT i.*, s.subconnector_name,
+               COUNT(ii.id) as items_count
+        FROM invoices i
+        LEFT JOIN subconnectors s ON i.subconnector_id = s.id
+        LEFT JOIN invoice_items ii ON i.id = ii.invoice_id
+        WHERE i.agent_id = %s 
+            AND i.invoice_type = 'final'
+            AND i.status = 'approved'
+        GROUP BY i.id
+        ORDER BY i.invoice_month DESC, i.generated_at DESC
+    """, (agent_id,))
+    
+    invoices = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return invoices
+
+def get_agent_invoice_stats(agent_id):
+    """Get invoice statistics for agent dashboard"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT 
+            COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_invoices,
+            COUNT(CASE WHEN status = 'generated' THEN 1 END) as pending_invoices,
+            SUM(CASE WHEN status = 'approved' THEN total_amount ELSE 0 END) as total_earnings,
+            COUNT(DISTINCT DATE_FORMAT(invoice_month, '%%Y-%%m')) as active_months,
+            COUNT(DISTINCT subconnector_id) as entities_used
+        FROM invoices 
+        WHERE agent_id = %s AND invoice_type = 'final'
+    """, (agent_id,))
+    
+    stats = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    # Handle None values
+    return {
+        'approved_invoices': stats['approved_invoices'] or 0,
+        'pending_invoices': stats['pending_invoices'] or 0,
+        'total_earnings': float(stats['total_earnings'] or 0),
+        'active_months': stats['active_months'] or 0,
+        'entities_used': stats['entities_used'] or 0
+    }
+
+def get_agent_monthly_breakdown(agent_id):
+    """Get monthly invoice breakdown for agent"""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT 
+            DATE_FORMAT(invoice_month, '%Y-%m') as month,
+            DATE_FORMAT(invoice_month, '%M %Y') as month_name,
+            COUNT(*) as invoice_count,
+            SUM(total_amount) as month_total,
+            GROUP_CONCAT(
+                CASE 
+                    WHEN subconnector_id IS NULL THEN 'Main Agent'
+                    ELSE s.subconnector_name 
+                END 
+                ORDER BY total_amount DESC
+                SEPARATOR ', '
+            ) as entities
+        FROM invoices i
+        LEFT JOIN subconnectors s ON i.subconnector_id = s.id
+        WHERE i.agent_id = %s 
+            AND i.invoice_type = 'final'
+            AND i.status = 'approved'
+        GROUP BY DATE_FORMAT(invoice_month, '%Y-%m'), DATE_FORMAT(invoice_month, '%M %Y')
+        ORDER BY month DESC
+        LIMIT 12
+    """, (agent_id,))
+    
+    months = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return months
