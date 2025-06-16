@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Tax Summary Report {{ report_data.year }} - Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-receipt me-2"></i>Tax Summary Report
+                        </h2>
+                        <p class="text-muted mb-0">Financial Year {{ report_data.year }}-{{ report_data.year + 1 }}</p>
+                    </div>
+                    <div>
+                        <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-print me-1"></i>Print Report
+                        </button>
+                        <a href="{{ url_for('reports.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Breakdown -->
+{% if report_data.monthly_data %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar me-2"></i>Monthly Breakdown
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Month</th>
+                                <th>Invoices</th>
+                                <th>Gross Amount</th>
+                                <th>Tax Deducted</th>
+                                <th>Net Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month in report_data.monthly_data %}
+                            <tr>
+                                <td>{{ month.month_name }}</td>
+                                <td><span class="badge bg-info">{{ month.invoice_count }}</span></td>
+                                <td>₹{{ "{:,.0f}".format(month.gross_amount) }}</td>
+                                <td>₹{{ "{:,.0f}".format(month.tax_deducted) }}</td>
+                                <td>₹{{ "{:,.0f}".format(month.net_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Agent-wise Summary -->
+{% if report_data.agent_summary %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Agent-wise Tax Summary
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Agent Name</th>
+                                <th>Invoices</th>
+                                <th>Gross Earnings</th>
+                                <th>Tax Deducted</th>
+                                <th>Net Earnings</th>
+                                <th>Effective Tax Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in report_data.agent_summary %}
+                            <tr>
+                                <td>{{ agent.agent_name }}</td>
+                                <td><span class="badge bg-info">{{ agent.invoice_count }}</span></td>
+                                <td>₹{{ "{:,.0f}".format(agent.gross_earnings) }}</td>
+                                <td>₹{{ "{:,.0f}".format(agent.tax_deducted) }}</td>
+                                <td>₹{{ "{:,.0f}".format(agent.net_earnings) }}</td>
+                                <td>
+                                    {% if agent.gross_earnings > 0 %}
+                                        {% set tax_rate = (agent.tax_deducted / agent.gross_earnings * 100) %}
+                                        {{ "{:.2f}".format(tax_rate) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not report_data.monthly_data and not report_data.agent_summary %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-excel fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Tax Data Found</h5>
+                <p class="text-muted">No tax data available for {{ report_data.year }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
