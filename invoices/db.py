@@ -163,18 +163,50 @@ def get_agent_subconnectors_for_invoice(agent_id):
     return subconnectors
 
 def get_recent_proforma_invoices(limit=10):
-    """Get recent proforma invoices for admin dashboard"""
+    """Get recent proforma invoices with complete workflow state"""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
     cursor.execute("""
-        SELECT i.*, u.name as agent_name,
-               COUNT(ii.id) as items_count
+        SELECT 
+            i.*,
+            u.name as agent_name,
+            COUNT(ii.id) as items_count,
+            pa.id as allocation_id,
+            pa.allocation_data,
+            final_invoices.final_count,
+            final_invoices.pending_count,
+            final_invoices.approved_count,
+            CASE 
+                WHEN pa.id IS NULL THEN 'ALLOCATION_NEEDED'
+                WHEN final_invoices.final_count = 0 THEN 'INVOICES_NEEDED'
+                WHEN final_invoices.pending_count > 0 THEN 'APPROVAL_NEEDED'
+                WHEN final_invoices.approved_count > 0 THEN 'COMPLETED'
+                ELSE 'ALLOCATION_NEEDED'
+            END as workflow_state
         FROM invoices i
         JOIN users u ON i.agent_id = u.id
         LEFT JOIN invoice_items ii ON i.id = ii.invoice_id
+        LEFT JOIN payout_allocations pa ON i.agent_id = pa.agent_id 
+            AND DATE_FORMAT(i.invoice_month, '%Y-%m') = DATE_FORMAT(pa.invoice_month, '%Y-%m')
+        LEFT JOIN (
+            SELECT 
+                agent_id,
+                DATE_FORMAT(invoice_month, '%Y-%m') as month_key,
+                COUNT(*) as final_count,
+                COUNT(CASE WHEN status = 'generated' THEN 1 END) as pending_count,
+                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count
+            FROM invoices 
+            WHERE invoice_type = 'final'
+            GROUP BY agent_id, DATE_FORMAT(invoice_month, '%Y-%m')
+        ) final_invoices ON i.agent_id = final_invoices.agent_id 
+            AND DATE_FORMAT(i.invoice_month, '%Y-%m') = final_invoices.month_key
         WHERE i.invoice_type = 'proforma'
-        GROUP BY i.id
+        GROUP BY i.id, 
+            pa.id,
+            final_invoices.final_count,
+            final_invoices.pending_count,
+            final_invoices.approved_count
         ORDER BY i.generated_at DESC
         LIMIT %s
     """, (limit,))

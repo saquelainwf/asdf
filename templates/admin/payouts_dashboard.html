@@ -150,7 +150,8 @@
                                 <th>Month</th>
                                 <th>Amount</th>
                                 <th>Items</th>
-                                <th>Status</th>
+                                <th>Proforma Status</th>
+                                <th>Workflow Status</th>
                                 <th>Generated</th>
                                 <th>Actions</th>
                             </tr>
@@ -175,13 +176,48 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {% if invoice.workflow_state == 'ALLOCATION_NEEDED' %}
+                                        <span class="badge bg-warning">Needs Allocation</span>
+                                    {% elif invoice.workflow_state == 'INVOICES_NEEDED' %}
+                                        <span class="badge bg-info">Ready for Invoices</span>
+                                    {% elif invoice.workflow_state == 'APPROVAL_NEEDED' %}
+                                        <span class="badge bg-primary">Awaiting Approval</span>
+                                    {% elif invoice.workflow_state == 'COMPLETED' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    {% endif %}
+                                </td>
+                                <td>
                                     <small class="text-muted">{{ invoice.generated_at.strftime('%d %b %Y') }}</small>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('payouts.allocation_form', invoice_id=invoice.id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-cogs me-1"></i>Allocate
-                                    </a>
+                                    {% if invoice.workflow_state == 'ALLOCATION_NEEDED' %}
+                                        <a href="{{ url_for('payouts.allocation_form', invoice_id=invoice.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-percentage me-1"></i>Allocate
+                                        </a>
+                                    {% elif invoice.workflow_state == 'INVOICES_NEEDED' %}
+                                        <a href="{{ url_for('payouts.generate_final_invoices', allocation_id=invoice.allocation_id) }}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-file-invoice me-1"></i>Generate Invoices
+                                        </a>
+                                    {% elif invoice.workflow_state == 'APPROVAL_NEEDED' %}
+                                        <a href="{{ url_for('payouts.review_final_invoices', allocation_id=invoice.allocation_id) }}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-eye me-1"></i>Review Invoices
+                                        </a>
+                                    {% elif invoice.workflow_state == 'COMPLETED' %}
+                                        <a href="{{ url_for('payouts.review_final_invoices', allocation_id=invoice.allocation_id) }}" 
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-check-circle me-1"></i>View Results
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ url_for('payouts.allocation_form', invoice_id=invoice.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-cogs me-1"></i>Manage
+                                        </a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
