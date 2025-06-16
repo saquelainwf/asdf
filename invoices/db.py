@@ -860,3 +860,28 @@ def generate_tax_certificate_data(agent_id, year):
             'average_per_invoice': total_gross / len(invoices) if invoices else 0
         }
     }
+
+def generate_invoice_pdf(invoice_id):
+    """Generate PDF for invoice using WeasyPrint"""
+    try:
+        from weasyprint import HTML, CSS
+        from flask import render_template
+        
+        # Get invoice data
+        pdf_data = generate_invoice_pdf_data(invoice_id)
+        if not pdf_data:
+            return None
+        
+        # Render HTML template
+        html_content = render_template('invoices/invoice_pdf.html', **pdf_data)
+        
+        # Generate PDF
+        pdf = HTML(string=html_content).write_pdf()
+        return pdf
+        
+    except ImportError:
+        # WeasyPrint not installed
+        return None
+    except Exception as e:
+        print(f"PDF generation error: {e}")
+        return None

@@ -173,7 +173,7 @@
                                         <i class="fas fa-eye me-1"></i>View
                                     </a>
                                     <button onclick="downloadInvoice({{ invoice.id }})" 
-                                            class="btn btn-sm btn-outline-success" disabled>
+                                            class="btn btn-sm btn-outline-success">
                                         <i class="fas fa-download me-1"></i>PDF
                                     </button>
                                 </td>
@@ -234,7 +234,7 @@
 <script>
 function downloadInvoice(invoiceId) {
     // PDF download functionality - coming soon
-    alert('PDF download feature is under development');
+    window.open(`/agent/invoice/${invoiceId}/pdf`, '_blank');
 }
 
 // Auto-refresh every 5 minutes to check for new invoices

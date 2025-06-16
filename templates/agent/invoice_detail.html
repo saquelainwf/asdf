@@ -131,7 +131,7 @@
                 </table>
                 
                 <div class="d-grid mt-3">
-                    <button onclick="downloadPDF()" class="btn btn-outline-success" disabled>
+                    <button onclick="downloadPDF()" class="btn btn-outline-success">
                         <i class="fas fa-download me-2"></i>Download PDF
                     </button>
                 </div>
@@ -211,7 +211,8 @@
 {% block scripts %}
 <script>
 function downloadPDF() {
-    alert('PDF download feature is under development');
+    const invoiceId = {{ invoice.id }};
+    window.open(`/agent/invoice/${invoiceId}/pdf`, '_blank');
 }
 </script>
 {% endblock %}

@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file
 from auth.decorators import admin_required, agent_required
 from .db import (
     get_final_invoice_details, approve_final_invoice, 
     get_pending_final_invoices, bulk_approve_invoices,
-    get_agent_final_invoices, get_agent_invoice_stats, get_agent_monthly_breakdown
+    get_agent_final_invoices, get_agent_invoice_stats, get_agent_monthly_breakdown,
+    generate_invoice_pdf
 )
+import io
 
 invoices_bp = Blueprint('invoices', __name__)
 
@@ -113,3 +115,28 @@ def agent_invoice_detail(invoice_id):
     return render_template('agent/invoice_detail.html',
                          invoice=invoice_data['invoice'],
                          items=invoice_data['items'])
+
+@invoices_bp.route('/agent/invoice/<int:invoice_id>/pdf')
+@agent_required
+def download_invoice_pdf(invoice_id):
+    """Download invoice as PDF"""
+    agent_id = session.get('user_id')
+    
+    # Verify invoice belongs to agent
+    invoice_data = get_final_invoice_details(invoice_id)
+    if not invoice_data or invoice_data['invoice']['agent_id'] != agent_id:
+        flash('Access denied', 'error')
+        return redirect(url_for('invoices.agent_invoices'))
+    
+    # Generate PDF
+    pdf_content = generate_invoice_pdf(invoice_id)
+    if not pdf_content:
+        flash('PDF generation not available', 'error')
+        return redirect(url_for('invoices.agent_invoice_detail', invoice_id=invoice_id))
+    
+    return send_file(
+        io.BytesIO(pdf_content),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"invoice_{invoice_data['invoice']['invoice_number']}.pdf"
+    )
