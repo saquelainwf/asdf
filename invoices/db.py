@@ -292,7 +292,7 @@ def create_single_final_invoice(allocation, proforma_items, admin_id, cursor):
 
     # Calculate and update tax
     tax_details = calculate_tax_for_entity(
-        allocation['total_approved_amount'],
+        float(allocation['total_approved_amount']),
         'individual',  # Default to individual
         None,  # No GST for main agent
         None   # No PAN for main agent
@@ -369,7 +369,7 @@ def create_split_final_invoice(allocation, alloc_data, proforma_items, admin_id,
 
     # Calculate and update tax
     tax_details = calculate_tax_for_entity(
-        alloc_data['amount'],
+        float(alloc_data['amount']),
         'registered' if gst_number else 'individual',
         gst_number,
         pan_number
@@ -668,6 +668,8 @@ def generate_invoice_pdf_data(invoice_id):
 
 def calculate_tax_for_entity(total_amount, entity_type='individual', gst_number=None, pan_number=None):
     """Calculate tax based on entity type and amount"""
+    
+    total_amount = float(total_amount)
     tax_details = {
         'tds_rate': 0.0,
         'gst_rate': 0.0,
