@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- Header -->
-<div class="row mb-4">
+<div class="row mb-4 no-print">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
@@ -26,6 +26,14 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Print Header (only visible when printing) -->
+<div class="d-none d-print-block">
+    <div class="print-title">
+        {{ invoice.invoice_type.upper() }} INVOICE - {{ invoice.invoice_number }}
+        <br><small>{{ invoice.invoice_month.strftime('%B %Y') }}</small>
     </div>
 </div>
 
